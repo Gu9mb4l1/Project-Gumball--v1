@@ -65,7 +65,7 @@ header.Parent = window
 -- GUMBALL title
 local title = Instance.new("TextLabel")
 title.Name = "Title"
-title.Position = UDim2.fromOffset(22, 0)
+title.Position = UDim2.fromOffset(22, -8) -- Moved 8 pixels higher
 title.Size = UDim2.new(0, 220, 1, 0)
 title.BackgroundTransparency = 1
 title.Text = "GUMBALL"
@@ -124,7 +124,7 @@ content.BackgroundColor3 = COLORS.Content
 content.BorderSizePixel = 0
 content.Parent = window
 
--- Category names and widths
+-- Categories
 local categoryNames = {
 	"Main",
 	"World",
@@ -180,10 +180,7 @@ for index, name in ipairs(categoryNames) do
 	label.Text = name
 	label.TextColor3 = COLORS.Inactive
 	label.TextSize = 15
-
-	-- Changed category font only
 	label.Font = Enum.Font.Gotham
-
 	label.TextXAlignment = Enum.TextXAlignment.Center
 	label.ZIndex = 5
 	label.Parent = button
