@@ -1,5 +1,9 @@
+-- Gumball UI
+-- UI-only menu with connected sub-tab sidebar
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -7,121 +11,156 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 local IsMobile = UserInputService.TouchEnabled
     and not UserInputService.KeyboardEnabled
 
--- Colors
-local BackgroundColor = Color3.fromRGB(15, 15, 15)
-local HeaderColor = Color3.fromRGB(18, 18, 18)
-local LineColor = Color3.fromRGB(45, 45, 45)
-local TextColor = Color3.fromRGB(240, 240, 240)
-local MutedColor = Color3.fromRGB(135, 135, 135)
+local Colors = {
+    BackgroundColor = Color3.fromRGB(15, 17, 21),
+    HeaderColor = Color3.fromRGB(18, 18, 18),
+    AccentColor = Color3.fromRGB(0, 190, 220),
+    FontColor = Color3.fromRGB(235, 240, 245),
+    MutedColor = Color3.fromRGB(135, 135, 135),
+    HoverColor = Color3.fromRGB(30, 33, 38),
+    SelectedColor = Color3.fromRGB(25, 28, 34),
+    BorderColor = Color3.fromRGB(45, 48, 54),
+}
 
--- Remove old UI
-local OldUI = PlayerGui:FindFirstChild("GumballUI")
-if OldUI then
-    OldUI:Destroy()
+local Previous = PlayerGui:FindFirstChild("GumballUI")
+if Previous then
+    Previous:Destroy()
 end
 
--- Screen GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GumballUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = PlayerGui
+local function Create(className, properties, parent)
+    local object = Instance.new(className)
+
+    for property, value in pairs(properties) do
+        object[property] = value
+    end
+
+    object.Parent = parent
+    return object
+end
+
+local function AddCorner(object, radius)
+    Create("UICorner", {
+        CornerRadius = UDim.new(0, radius),
+    }, object)
+end
+
+local function AddStroke(object, color, transparency)
+    return Create("UIStroke", {
+        Color = color or Colors.BorderColor,
+        Thickness = 1,
+        Transparency = transparency or 0,
+    }, object)
+end
+
+local function Animate(object, properties)
+    TweenService:Create(
+        object,
+        TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        properties
+    ):Play()
+end
+
+local ScreenGui = Create("ScreenGui", {
+    Name = "GumballUI",
+    ResetOnSpawn = false,
+    IgnoreGuiInset = true,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+}, PlayerGui)
 
 -- Main window
-local Window = Instance.new("Frame")
-Window.Name = "Window"
-Window.Size = UDim2.fromOffset(620, 390)
-Window.Position = UDim2.new(0.5, -310, 0.5, -195)
-Window.BackgroundColor3 = BackgroundColor
-Window.BorderSizePixel = 0
-Window.Visible = true
-Window.Active = true
-Window.Parent = ScreenGui
+local Window = Create("Frame", {
+    Name = "Window",
+    BackgroundColor3 = Colors.BackgroundColor,
+    BorderSizePixel = 0,
+    Size = UDim2.fromOffset(620, 390),
+    Position = UDim2.new(0.5, -310, 0.5, -195),
+    ClipsDescendants = true,
+    Visible = true,
+    ZIndex = 1,
+}, ScreenGui)
 
-local WindowCorner = Instance.new("UICorner")
-WindowCorner.CornerRadius = UDim.new(0, 6)
-WindowCorner.Parent = Window
-
-local WindowStroke = Instance.new("UIStroke")
-WindowStroke.Color = LineColor
-WindowStroke.Thickness = 1
-WindowStroke.Parent = Window
+AddCorner(Window, 9)
+AddStroke(Window)
 
 -- Header
-local Header = Instance.new("Frame")
-Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 66)
-Header.BackgroundColor3 = HeaderColor
-Header.BorderSizePixel = 0
-Header.Parent = Window
+local Header = Create("Frame", {
+    Name = "Header",
+    BackgroundColor3 = Colors.HeaderColor,
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 66),
+    ZIndex = 2,
+}, Window)
 
-local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 6)
-HeaderCorner.Parent = Header
+-- Mask header corners so the window retains its rounded shape
+local HeaderTopMask = Create("Frame", {
+    BackgroundColor3 = Colors.HeaderColor,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(0, 9),
+    Size = UDim2.new(1, 0, 1, -9),
+    ZIndex = 2,
+}, Header)
 
-local HeaderCover = Instance.new("Frame")
-HeaderCover.Size = UDim2.new(1, 0, 0, 8)
-HeaderCover.Position = UDim2.new(0, 0, 1, -8)
-HeaderCover.BackgroundColor3 = HeaderColor
-HeaderCover.BorderSizePixel = 0
-HeaderCover.Parent = Header
+local HeaderCornerMask = Create("Frame", {
+    BackgroundColor3 = Colors.HeaderColor,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.new(1, 0, 0, 12),
+    ZIndex = 2,
+}, Header)
 
--- Title
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(0, 115, 1, 0)
-Title.Position = UDim2.fromOffset(16, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "Gumball"
-Title.TextColor3 = TextColor
-Title.TextSize = 18
-Title.Font = Enum.Font.Gotham
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Header
+local Title = Create("TextLabel", {
+    Name = "Title",
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(16, 0),
+    Size = UDim2.fromOffset(115, 65),
+    Font = Enum.Font.GothamBold,
+    Text = "Gumball",
+    TextColor3 = Colors.FontColor,
+    TextSize = 18,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 4,
+}, Header)
 
--- Main category container
-local Categories = Instance.new("ScrollingFrame")
-Categories.Name = "Categories"
-Categories.Position = UDim2.new(0, 132, 0, 0)
-Categories.Size = UDim2.new(1, -140, 1, 0)
-Categories.BackgroundTransparency = 1
-Categories.BorderSizePixel = 0
-Categories.ScrollBarThickness = 0
-Categories.ScrollingDirection = Enum.ScrollingDirection.X
-Categories.CanvasSize = UDim2.new(0, 0, 0, 0)
-Categories.AutomaticCanvasSize = Enum.AutomaticSize.X
-Categories.Active = true
-Categories.Parent = Header
+-- Main tabs stay in the header
+local MainTabBar = Create("ScrollingFrame", {
+    Name = "MainTabBar",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(132, 0),
+    Size = UDim2.new(1, -140, 1, 0),
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    AutomaticCanvasSize = Enum.AutomaticSize.X,
+    ScrollingDirection = Enum.ScrollingDirection.X,
+    ScrollBarThickness = 0,
+    ZIndex = 4,
+}, Header)
 
-local CategoriesLayout = Instance.new("UIListLayout")
-CategoriesLayout.FillDirection = Enum.FillDirection.Horizontal
-CategoriesLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-CategoriesLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-CategoriesLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CategoriesLayout.Padding = UDim.new(0, 0)
-CategoriesLayout.Parent = Categories
+Create("UIListLayout", {
+    FillDirection = Enum.FillDirection.Horizontal,
+    HorizontalAlignment = Enum.HorizontalAlignment.Left,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 4),
+}, MainTabBar)
 
--- Header divider
-local HeaderDivider = Instance.new("Frame")
-HeaderDivider.Name = "HeaderDivider"
-HeaderDivider.Size = UDim2.new(1, 0, 0, 1)
-HeaderDivider.Position = UDim2.new(0, 0, 0, 65)
-HeaderDivider.BackgroundColor3 = LineColor
-HeaderDivider.BorderSizePixel = 0
-HeaderDivider.ZIndex = 5
-HeaderDivider.Parent = Header
+Create("Frame", {
+    Name = "HeaderDivider",
+    BackgroundColor3 = Colors.BorderColor,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 0, 0, 65),
+    Size = UDim2.new(1, 0, 0, 1),
+    ZIndex = 5,
+}, Window)
 
--- Content
-local Content = Instance.new("Frame")
-Content.Name = "Content"
-Content.Position = UDim2.new(0, 0, 0, 66)
-Content.Size = UDim2.new(1, 0, 1, -66)
-Content.BackgroundTransparency = 1
-Content.BorderSizePixel = 0
-Content.Parent = Window
+local Content = Create("Frame", {
+    Name = "Content",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(0, 66),
+    Size = UDim2.new(1, 0, 1, -66),
+    ZIndex = 2,
+}, Window)
 
--- Tab definitions
 local TabDefinitions = {
     Main = {"Main", "Rage", "Weapons"},
     World = {"Lighting", "Custom World", "Custom Sky"},
@@ -129,388 +168,467 @@ local TabDefinitions = {
     Visuals = {},
     Character = {"Movement"},
     Misc = {"Cosmetic", "Rank", "Detection"},
-    Settings = {"General", "Config"}
+    Settings = {"General", "Config"},
 }
 
-local TabOrder = {
+local MainTabs = {
     "Main", "World", "ESP", "Visuals",
-    "Character", "Misc", "Settings"
+    "Character", "Misc", "Settings",
 }
 
-local TabWidths = {
+local MainTabWidths = {
     Main = 88,
     World = 88,
     ESP = 78,
     Visuals = 96,
     Character = 116,
     Misc = 78,
-    Settings = 104
+    Settings = 104,
 }
 
-local TabButtons = {}
-local TabIndicators = {}
-local TabPages = {}
+local MainTabButtons = {}
+local MainTabPages = {}
 local SubTabButtons = {}
-local SubTabIndicators = {}
 local SubTabPages = {}
-local SelectedSubTab = {}
+local SidebarFrames = {}
 
-local function CreatePage(Name, Parent)
-    local Page = Instance.new("Frame")
-    Page.Name = Name
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.BackgroundTransparency = 1
-    Page.BorderSizePixel = 0
-    Page.Visible = false
-    Page.Parent = Parent
-    return Page
-end
+local CurrentMainTab = "Main"
+local CurrentSubTab = {}
 
--- Create pages and sub-tabs
-for _, TabName in ipairs(TabOrder) do
-    TabPages[TabName] = CreatePage(TabName .. "Page", Content)
+-- Connected sidebar:
+-- no gap between the sidebar and the main window.
+-- The sidebar shares the window's outer border and visual style.
+local Sidebar = Create("Frame", {
+    Name = "ConnectedSidebar",
+    BackgroundColor3 = Colors.HeaderColor,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(0, 66),
+    Size = UDim2.fromOffset(124, 324),
+    Visible = true,
+    ZIndex = 3,
+}, Window)
 
-    local SubTabs = TabDefinitions[TabName]
+local SidebarDivider = Create("Frame", {
+    Name = "SidebarDivider",
+    BackgroundColor3 = Colors.BorderColor,
+    BorderSizePixel = 0,
+    Position = UDim2.new(1, -1, 0, 0),
+    Size = UDim2.new(0, 1, 1, 0),
+    ZIndex = 4,
+}, Sidebar)
 
-    if #SubTabs > 0 then
-        local SubTabBar = Instance.new("ScrollingFrame")
-        SubTabBar.Name = "SubTabBar"
-        SubTabBar.Position = UDim2.fromOffset(14, 12)
-        SubTabBar.Size = UDim2.new(1, -28, 0, 34)
-        SubTabBar.BackgroundTransparency = 1
-        SubTabBar.BorderSizePixel = 0
-        SubTabBar.ScrollBarThickness = 0
-        SubTabBar.ScrollingDirection = Enum.ScrollingDirection.X
-        SubTabBar.AutomaticCanvasSize = Enum.AutomaticSize.X
-        SubTabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
-        SubTabBar.Active = true
-        SubTabBar.Parent = TabPages[TabName]
+local SidebarTitle = Create("TextLabel", {
+    Name = "SidebarTitle",
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(12, 10),
+    Size = UDim2.new(1, -24, 0, 22),
+    Font = Enum.Font.GothamBold,
+    Text = "CATEGORIES",
+    TextColor3 = Colors.MutedColor,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 4,
+}, Sidebar)
 
-        local Layout = Instance.new("UIListLayout")
-        Layout.FillDirection = Enum.FillDirection.Horizontal
-        Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.SortOrder = Enum.SortOrder.LayoutOrder
-        Layout.Padding = UDim.new(0, 8)
-        Layout.Parent = SubTabBar
+Create("Frame", {
+    Name = "SidebarTitleDivider",
+    BackgroundColor3 = Colors.BorderColor,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(10, 38),
+    Size = UDim2.new(1, -20, 0, 1),
+    ZIndex = 4,
+}, Sidebar)
 
-        local SubTabContent = Instance.new("Frame")
-        SubTabContent.Name = "SubTabContent"
-        SubTabContent.Position = UDim2.fromOffset(14, 54)
-        SubTabContent.Size = UDim2.new(1, -28, 1, -66)
-        SubTabContent.BackgroundTransparency = 1
-        SubTabContent.BorderSizePixel = 0
-        SubTabContent.Parent = TabPages[TabName]
+local SidebarList = Create("Frame", {
+    Name = "SidebarList",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(7, 47),
+    Size = UDim2.new(1, -14, 1, -54),
+    ZIndex = 4,
+}, Sidebar)
 
-        SubTabButtons[TabName] = {}
-        SubTabIndicators[TabName] = {}
-        SubTabPages[TabName] = {}
+Create("UIListLayout", {
+    FillDirection = Enum.FillDirection.Vertical,
+    HorizontalAlignment = Enum.HorizontalAlignment.Center,
+    VerticalAlignment = Enum.VerticalAlignment.Top,
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 4),
+}, SidebarList)
 
-        for Index, SubTabName in ipairs(SubTabs) do
-            local Page = CreatePage(
-                SubTabName:gsub("%s+", "") .. "Page",
-                SubTabContent
-            )
-            SubTabPages[TabName][SubTabName] = Page
+-- Create the main pages and header tabs
+for index, tabName in ipairs(MainTabs) do
+    local Page = Create("Frame", {
+        Name = tabName .. "Page",
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(124, 0),
+        Size = UDim2.new(1, -124, 1, 0),
+        Visible = tabName == "Main",
+        ZIndex = 2,
+    }, Content)
 
-            local Button = Instance.new("TextButton")
-            Button.Name = SubTabName:gsub("%s+", "") .. "Button"
-            Button.Size = UDim2.fromOffset(
-                math.max(76, #SubTabName * 8 + 24),
-                32
-            )
-            Button.BackgroundColor3 = HeaderColor
-            Button.BorderSizePixel = 0
-            Button.Text = SubTabName
-            Button.TextColor3 = MutedColor
-            Button.TextSize = 13
-            Button.Font = Enum.Font.Gotham
-            Button.LayoutOrder = Index
-            Button.AutoButtonColor = false
-            Button.Parent = SubTabBar
+    MainTabPages[tabName] = Page
+    SubTabButtons[tabName] = {}
+    SubTabPages[tabName] = {}
 
-            local Corner = Instance.new("UICorner")
-            Corner.CornerRadius = UDim.new(0, 4)
-            Corner.Parent = Button
+    local MainButton = Create("TextButton", {
+        Name = tabName .. "Button",
+        BackgroundColor3 = Colors.HeaderColor,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Size = UDim2.fromOffset(MainTabWidths[tabName], 36),
+        Font = Enum.Font.GothamMedium,
+        Text = tabName,
+        TextColor3 = Colors.MutedColor,
+        TextSize = 12,
+        AutoButtonColor = false,
+        LayoutOrder = index,
+        ZIndex = 5,
+    }, MainTabBar)
 
-            local Stroke = Instance.new("UIStroke")
-            Stroke.Color = LineColor
-            Stroke.Thickness = 1
-            Stroke.Parent = Button
+    AddCorner(MainButton, 5)
 
-            local Indicator = Instance.new("Frame")
-            Indicator.Name = "ActiveIndicator"
-            Indicator.Size = UDim2.new(1, -20, 0, 2)
-            Indicator.AnchorPoint = Vector2.new(0.5, 1)
-            Indicator.Position = UDim2.new(0.5, 0, 1, -3)
-            Indicator.BackgroundColor3 = TextColor
-            Indicator.BorderSizePixel = 0
-            Indicator.Visible = false
-            Indicator.Parent = Button
+    local Indicator = Create("Frame", {
+        Name = "ActiveIndicator",
+        BackgroundColor3 = Colors.AccentColor,
+        BorderSizePixel = 0,
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, -1),
+        Size = UDim2.new(0, 20, 0, 2),
+        Visible = tabName == "Main",
+        ZIndex = 6,
+    }, MainButton)
 
-            SubTabButtons[TabName][SubTabName] = Button
-            SubTabIndicators[TabName][SubTabName] = Indicator
+    MainTabButtons[tabName] = {
+        Button = MainButton,
+        Indicator = Indicator,
+    }
 
-            Button.Activated:Connect(function()
-                SelectedSubTab[TabName] = SubTabName
+    MainButton.MouseEnter:Connect(function()
+        if CurrentMainTab ~= tabName then
+            Animate(MainButton, {
+                BackgroundTransparency = 0,
+                BackgroundColor3 = Colors.HoverColor,
+                TextColor3 = Colors.FontColor,
+            })
+        end
+    end)
 
-                for _, Name in ipairs(SubTabs) do
-                    local Selected = Name == SubTabName
+    MainButton.MouseLeave:Connect(function()
+        if CurrentMainTab ~= tabName then
+            Animate(MainButton, {
+                BackgroundTransparency = 1,
+                TextColor3 = Colors.MutedColor,
+            })
+        end
+    end)
 
-                    SubTabButtons[TabName][Name].TextColor3 =
-                        Selected and TextColor or MutedColor
+    -- One separate vertical list of sub-tabs in the connected sidebar
+    for subIndex, subName in ipairs(TabDefinitions[tabName]) do
+        local SubButton = Create("TextButton", {
+            Name = subName:gsub("%s+", "") .. "Button",
+            BackgroundColor3 = subIndex == 1
+                and Colors.SelectedColor
+                or Colors.HeaderColor,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 34),
+            Font = Enum.Font.GothamMedium,
+            Text = subName,
+            TextColor3 = subIndex == 1
+                and Colors.FontColor
+                or Colors.MutedColor,
+            TextSize = 12,
+            TextWrapped = true,
+            AutoButtonColor = false,
+            LayoutOrder = subIndex,
+            Visible = tabName == CurrentMainTab,
+            ZIndex = 5,
+        }, SidebarList)
 
-                    SubTabIndicators[TabName][Name].Visible = Selected
-                    SubTabPages[TabName][Name].Visible = Selected
-                end
-            end)
+        AddCorner(SubButton, 5)
+
+        local ActiveBar = Create("Frame", {
+            Name = "ActiveBar",
+            BackgroundColor3 = Colors.AccentColor,
+            BorderSizePixel = 0,
+            Position = UDim2.fromOffset(0, 7),
+            Size = UDim2.fromOffset(2, 20),
+            Visible = subIndex == 1 and tabName == CurrentMainTab,
+            ZIndex = 6,
+        }, SubButton)
+
+        local SubPage = Create("Frame", {
+            Name = subName:gsub("%s+", "") .. "Page",
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Position = UDim2.fromOffset(14, 12),
+            Size = UDim2.new(1, -28, 1, -24),
+            Visible = subIndex == 1,
+            ZIndex = 2,
+        }, Page)
+
+        SubTabButtons[tabName][subName] = {
+            Button = SubButton,
+            ActiveBar = ActiveBar,
+        }
+
+        SubTabPages[tabName][subName] = SubPage
+
+        if subIndex == 1 then
+            CurrentSubTab[tabName] = subName
         end
 
-        SelectedSubTab[TabName] = SubTabs[1]
-        SubTabButtons[TabName][SubTabs[1]].TextColor3 = TextColor
-        SubTabIndicators[TabName][SubTabs[1]].Visible = true
-        SubTabPages[TabName][SubTabs[1]].Visible = true
+        SubButton.MouseEnter:Connect(function()
+            if CurrentSubTab[tabName] ~= subName then
+                Animate(SubButton, {
+                    BackgroundColor3 = Colors.HoverColor,
+                    TextColor3 = Colors.FontColor,
+                })
+            end
+        end)
+
+        SubButton.MouseLeave:Connect(function()
+            if CurrentSubTab[tabName] ~= subName then
+                Animate(SubButton, {
+                    BackgroundColor3 = Colors.HeaderColor,
+                    TextColor3 = Colors.MutedColor,
+                })
+            end
+        end)
+
+        SubButton.Activated:Connect(function()
+            CurrentSubTab[tabName] = subName
+
+            for name, data in pairs(SubTabButtons[tabName]) do
+                local selected = name == subName
+
+                data.ActiveBar.Visible = selected
+
+                Animate(data.Button, {
+                    BackgroundColor3 = selected
+                        and Colors.SelectedColor
+                        or Colors.HeaderColor,
+                    TextColor3 = selected
+                        and Colors.FontColor
+                        or Colors.MutedColor,
+                })
+            end
+
+            for name, page in pairs(SubTabPages[tabName]) do
+                page.Visible = name == subName
+            end
+        end)
     end
 end
 
--- Select top-level tab
-local function SelectTab(TabName)
-    for _, Name in ipairs(TabOrder) do
-        local Selected = Name == TabName
+local function SelectMainTab(tabName)
+    CurrentMainTab = tabName
 
-        TabButtons[Name].TextColor3 =
-            Selected and TextColor or MutedColor
+    for name, page in pairs(MainTabPages) do
+        page.Visible = name == tabName
+    end
 
-        TabIndicators[Name].Visible = Selected
-        TabPages[Name].Visible = Selected
+    for name, data in pairs(MainTabButtons) do
+        local selected = name == tabName
+
+        data.Indicator.Visible = selected
+
+        Animate(data.Button, {
+            TextColor3 = selected
+                and Colors.FontColor
+                or Colors.MutedColor,
+            BackgroundTransparency = selected and 0 or 1,
+            BackgroundColor3 = selected
+                and Colors.SelectedColor
+                or Colors.HeaderColor,
+        })
+    end
+
+    Sidebar.Visible = #TabDefinitions[tabName] > 0
+
+    for tab, buttons in pairs(SubTabButtons) do
+        for subName, data in pairs(buttons) do
+            local selected = tab == tabName
+                and CurrentSubTab[tab] == subName
+
+            data.Button.Visible = tab == tabName
+            data.ActiveBar.Visible = selected
+            data.Button.BackgroundColor3 = selected
+                and Colors.SelectedColor
+                or Colors.HeaderColor
+            data.Button.TextColor3 = selected
+                and Colors.FontColor
+                or Colors.MutedColor
+        end
     end
 end
 
--- Create top-level buttons
-for Index, TabName in ipairs(TabOrder) do
-    local Button = Instance.new("TextButton")
-    Button.Name = TabName .. "Button"
-    Button.Size = UDim2.new(0, TabWidths[TabName], 1, 0)
-    Button.BackgroundTransparency = 1
-    Button.BorderSizePixel = 0
-    Button.Text = TabName
-    Button.TextColor3 = MutedColor
-    Button.TextSize = 13
-    Button.Font = Enum.Font.Gotham
-    Button.LayoutOrder = Index
-    Button.AutoButtonColor = false
-    Button.Parent = Categories
-
-    local Indicator = Instance.new("Frame")
-    Indicator.Name = "ActiveIndicator"
-    Indicator.Size = UDim2.new(
-        0, math.max(20, TabWidths[TabName] - 28), 0, 2
-    )
-    Indicator.AnchorPoint = Vector2.new(0.5, 1)
-    Indicator.Position = UDim2.new(0.5, 0, 1, -2)
-    Indicator.BackgroundColor3 = TextColor
-    Indicator.BorderSizePixel = 0
-    Indicator.Visible = false
-    Indicator.Parent = Button
-
-    TabButtons[TabName] = Button
-    TabIndicators[TabName] = Indicator
-
-    Button.Activated:Connect(function()
-        SelectTab(TabName)
+for tabName, data in pairs(MainTabButtons) do
+    data.Button.Activated:Connect(function()
+        SelectMainTab(tabName)
     end)
 end
 
--- Responsive sizing: smaller on mobile, original size on PC
-local function UpdateMenuSize()
-    local Camera = workspace.CurrentCamera
-    if not Camera then
-        return
-    end
+-- Drag the menu using its header
+local Dragging = false
+local DragStart
+local WindowStart
 
-    local Viewport = Camera.ViewportSize
-
-    if IsMobile then
-        local Width = math.min(500, Viewport.X - 24)
-        local Height = math.min(340, Viewport.Y - 100)
-
-        Width = math.max(280, Width)
-        Height = math.max(240, Height)
-
-        Window.Size = UDim2.fromOffset(Width, Height)
-        Window.Position = UDim2.new(0.5, -Width / 2, 0.5, -Height / 2)
-
-        Title.TextSize = 16
-        Title.Size = UDim2.new(0, 95, 1, 0)
-
-        Categories.Position = UDim2.new(0, 110, 0, 0)
-        Categories.Size = UDim2.new(1, -116, 1, 0)
-    else
-        Window.Size = UDim2.fromOffset(620, 390)
-        Window.Position = UDim2.new(0.5, -310, 0.5, -195)
-
-        Title.TextSize = 18
-        Title.Size = UDim2.new(0, 115, 1, 0)
-
-        Categories.Position = UDim2.new(0, 132, 0, 0)
-        Categories.Size = UDim2.new(1, -140, 1, 0)
-    end
-end
-
-UpdateMenuSize()
-
-if workspace.CurrentCamera then
-    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateMenuSize)
-end
-
--- Select initial tab
-SelectTab("Main")
-
--- Drag the main window
-local WindowDragging = false
-local WindowDragStart
-local WindowStartPosition
-local WindowDragInput
-
-Header.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1
-        or Input.UserInputType == Enum.UserInputType.Touch then
-
-        WindowDragging = true
-        WindowDragStart = Input.Position
-        WindowStartPosition = Window.Position
-
-        Input.Changed:Connect(function()
-            if Input.UserInputState == Enum.UserInputState.End then
-                WindowDragging = false
-            end
-        end)
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        Dragging = true
+        DragStart = input.Position
+        WindowStart = Window.Position
     end
 end)
 
-Header.InputChanged:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseMovement
-        or Input.UserInputType == Enum.UserInputType.Touch then
-        WindowDragInput = Input
-    end
-end)
+UserInputService.InputChanged:Connect(function(input)
+    if Dragging and DragStart and WindowStart then
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
 
-UserInputService.InputChanged:Connect(function(Input)
-    if WindowDragging
-        and (Input == WindowDragInput
-        or Input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - DragStart
 
-        local Delta = Input.Position - WindowDragStart
-
-        Window.Position = UDim2.new(
-            WindowStartPosition.X.Scale,
-            WindowStartPosition.X.Offset + Delta.X,
-            WindowStartPosition.Y.Scale,
-            WindowStartPosition.Y.Offset + Delta.Y
-        )
-    end
-end)
-
--- PC toggle with RightShift
-UserInputService.InputBegan:Connect(function(Input, GameProcessed)
-    if GameProcessed then
-        return
-    end
-
-    if Input.KeyCode == Enum.KeyCode.RightShift then
-        Window.Visible = not Window.Visible
-    end
-end)
-
--- Mobile Toggle button
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "Toggle"
-ToggleButton.Size = UDim2.fromOffset(76, 38)
-ToggleButton.Position = UDim2.fromOffset(12, 70)
-ToggleButton.BackgroundColor3 = BackgroundColor
-ToggleButton.BorderSizePixel = 0
-ToggleButton.Text = "Toggle"
-ToggleButton.TextColor3 = TextColor
-ToggleButton.TextSize = 14
-ToggleButton.Font = Enum.Font.Gotham
-ToggleButton.Visible = IsMobile
-ToggleButton.Active = true
-ToggleButton.AutoButtonColor = false
-ToggleButton.ZIndex = 20
-ToggleButton.Parent = ScreenGui
-
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 5)
-ToggleCorner.Parent = ToggleButton
-
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = LineColor
-ToggleStroke.Thickness = 1
-ToggleStroke.Parent = ToggleButton
-
--- Toggle button can move only while menu is OPEN
-local ToggleDragging = false
-local ToggleDragStart
-local ToggleStartPosition
-local ToggleDragInput
-local ToggleMoved = false
-
-ToggleButton.InputBegan:Connect(function(Input)
-    if not Window.Visible then
-        return
-    end
-
-    if Input.UserInputType == Enum.UserInputType.Touch
-        or Input.UserInputType == Enum.UserInputType.MouseButton1 then
-
-        ToggleDragging = true
-        ToggleMoved = false
-        ToggleDragStart = Input.Position
-        ToggleStartPosition = ToggleButton.Position
-
-        Input.Changed:Connect(function()
-            if Input.UserInputState == Enum.UserInputState.End then
-                ToggleDragging = false
-            end
-        end)
-    end
-end)
-
-ToggleButton.InputChanged:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.Touch
-        or Input.UserInputType == Enum.UserInputType.MouseMovement then
-        ToggleDragInput = Input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(Input)
-    if not ToggleDragging or not Window.Visible then
-        return
-    end
-
-    if Input == ToggleDragInput
-        or Input.UserInputType == Enum.UserInputType.Touch then
-
-        local Delta = Input.Position - ToggleDragStart
-
-        if math.abs(Delta.X) > 5 or math.abs(Delta.Y) > 5 then
-            ToggleMoved = true
+            Window.Position = UDim2.new(
+                WindowStart.X.Scale,
+                WindowStart.X.Offset + delta.X,
+                WindowStart.Y.Scale,
+                WindowStart.Y.Offset + delta.Y
+            )
         end
-
-        ToggleButton.Position = UDim2.new(
-            ToggleStartPosition.X.Scale,
-            ToggleStartPosition.X.Offset + Delta.X,
-            ToggleStartPosition.Y.Scale,
-            ToggleStartPosition.Y.Offset + Delta.Y
-        )
     end
 end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        Dragging = false
+        DragStart = nil
+        WindowStart = nil
+    end
+end)
+
+-- Mobile toggle: keep the original simple bottom-left style/position
+local ToggleButton = Create("TextButton", {
+    Name = "ToggleButton",
+    BackgroundColor3 = Colors.BackgroundColor,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(12, 70),
+    Size = UDim2.fromOffset(76, 38),
+    Font = Enum.Font.GothamBold,
+    Text = "Gumball",
+    TextColor3 = Colors.FontColor,
+    TextSize = 12,
+    AutoButtonColor = false,
+    Visible = IsMobile,
+    ZIndex = 30,
+}, ScreenGui)
+
+AddCorner(ToggleButton, 7)
+AddStroke(ToggleButton)
 
 ToggleButton.Activated:Connect(function()
-    if ToggleMoved then
-        ToggleMoved = false
+    Window.Visible = not Window.Visible
+
+    if Window.Visible then
+        SelectMainTab(CurrentMainTab)
+    else
+        Sidebar.Visible = false
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then
         return
     end
 
-    Window.Visible = not Window.Visible
+    if input.KeyCode == Enum.KeyCode.RightShift and not IsMobile then
+        Window.Visible = not Window.Visible
+
+        if Window.Visible then
+            SelectMainTab(CurrentMainTab)
+        else
+            Sidebar.Visible = false
+        end
+    end
 end)
+
+-- Responsive sizing
+local function UpdateMenuSize()
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return
+    end
+
+    local viewport = camera.ViewportSize
+    IsMobile = UserInputService.TouchEnabled
+        and not UserInputService.KeyboardEnabled
+
+    ToggleButton.Visible = IsMobile
+
+    if IsMobile then
+        local width = math.max(280, math.min(500, viewport.X - 24))
+        local height = math.max(240, math.min(340, viewport.Y - 100))
+
+        Window.Size = UDim2.fromOffset(width, height)
+        Window.Position = UDim2.fromOffset(
+            (viewport.X - width) / 2,
+            (viewport.Y - height) / 2
+        )
+
+        Title.TextSize = 16
+        Title.Size = UDim2.fromOffset(95, 65)
+        MainTabBar.Position = UDim2.fromOffset(110, 0)
+        MainTabBar.Size = UDim2.new(1, -116, 1, 0)
+        Sidebar.Size = UDim2.new(0, 100, 1, -66)
+
+        for tabName, data in pairs(MainTabButtons) do
+            data.Button.TextSize = 11
+            data.Button.Size = UDim2.fromOffset(
+                math.max(66, MainTabWidths[tabName] - 12),
+                36
+            )
+        end
+    else
+        Window.Size = UDim2.fromOffset(620, 390)
+        Window.Position = UDim2.fromOffset(
+            (viewport.X - 620) / 2,
+            (viewport.Y - 390) / 2
+        )
+
+        Title.TextSize = 18
+        Title.Size = UDim2.fromOffset(115, 65)
+        MainTabBar.Position = UDim2.fromOffset(132, 0)
+        MainTabBar.Size = UDim2.new(1, -140, 1, 0)
+        Sidebar.Size = UDim2.new(0, 124, 1, -66)
+
+        for tabName, data in pairs(MainTabButtons) do
+            data.Button.TextSize = 12
+            data.Button.Size = UDim2.fromOffset(
+                MainTabWidths[tabName],
+                36
+            )
+        end
+    end
+end
+
+if workspace.CurrentCamera then
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(
+        UpdateMenuSize
+    )
+end
+
+Window:GetPropertyChangedSignal("Visible"):Connect(function()
+    if Window.Visible then
+        SelectMainTab(CurrentMainTab)
+    else
+        Sidebar.Visible = false
+    end
+end)
+
+UpdateMenuSize()
+SelectMainTab("Main")
+
+print("Gumball UI loaded.")
