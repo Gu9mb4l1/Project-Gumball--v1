@@ -1,29 +1,66 @@
+-- GUMBALL | Dark UI
+-- LocalScript: StarterPlayer > StarterPlayerScripts
+-- Scrollable sections, clean dark styling, OFF toggles and zeroed sliders.
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local unlockRemote = ReplicatedStorage:WaitForChild("GumballUnlockCosmetics", 10)
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local unlockRemote = ReplicatedStorage:FindFirstChild("GumballUnlockCosmetics")
 
-local previous = playerGui:FindFirstChild("GumballUI")
-if previous then
-	previous:Destroy()
+local oldGui = playerGui:FindFirstChild("GumballUI")
+if oldGui then
+	oldGui:Destroy()
 end
 
 local COLORS = {
 	Background = Color3.fromRGB(9, 11, 14),
-	Header = Color3.fromRGB(10, 12, 15),
-	Content = Color3.fromRGB(9, 11, 14),
+	Header = Color3.fromRGB(12, 14, 18),
+	Card = Color3.fromRGB(15, 17, 21),
+	Row = Color3.fromRGB(19, 22, 27),
+	Selected = Color3.fromRGB(30, 34, 40),
 	Border = Color3.fromRGB(43, 46, 52),
 	Divider = Color3.fromRGB(36, 39, 44),
 	White = Color3.fromRGB(245, 245, 247),
-	Inactive = Color3.fromRGB(174, 177, 184),
-	Muted = Color3.fromRGB(115, 120, 130),
-	Selected = Color3.fromRGB(30, 34, 40),
+	Inactive = Color3.fromRGB(160, 165, 174),
+	Muted = Color3.fromRGB(110, 116, 126),
 	Green = Color3.fromRGB(104, 210, 140),
 	Amber = Color3.fromRGB(255, 190, 90),
 }
+
+local function corner(instance, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius or 8)
+	c.Parent = instance
+	return c
+end
+
+local function stroke(instance, color, thickness)
+	local s = Instance.new("UIStroke")
+	s.Color = color or COLORS.Border
+	s.Thickness = thickness or 1
+	s.Parent = instance
+	return s
+end
+
+local function label(parent, name, text, size, position, font, color)
+	local obj = Instance.new("TextLabel")
+	obj.Name = name
+	obj.BackgroundTransparency = 1
+	obj.Size = size
+	obj.Position = position or UDim2.new()
+	obj.Font = font or Enum.Font.Gotham
+	obj.Text = text
+	obj.TextColor3 = color or COLORS.White
+	obj.TextSize = 12
+	obj.TextXAlignment = Enum.TextXAlignment.Left
+	obj.TextYAlignment = Enum.TextYAlignment.Center
+	obj.Parent = parent
+	return obj
+end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "GumballUI"
@@ -36,59 +73,58 @@ local window = Instance.new("Frame")
 window.Name = "Window"
 window.AnchorPoint = Vector2.new(0.5, 0.5)
 window.Position = UDim2.fromScale(0.5, 0.5)
-window.Size = UDim2.new(0.89, 0, 0.76, 0)
+window.Size = UDim2.new(0.9, 0, 0.8, 0)
 window.BackgroundColor3 = COLORS.Background
 window.BorderSizePixel = 0
 window.ClipsDescendants = true
 window.Parent = gui
+corner(window, 12)
+stroke(window, COLORS.Border, 1.5)
 
-local sizeConstraint = Instance.new("UISizeConstraint")
-sizeConstraint.MinSize = Vector2.new(340, 300)
-sizeConstraint.MaxSize = Vector2.new(1140, 780)
-sizeConstraint.Parent = window
-
-local windowCorner = Instance.new("UICorner")
-windowCorner.CornerRadius = UDim.new(0, 12)
-windowCorner.Parent = window
-
-local outline = Instance.new("UIStroke")
-outline.Color = COLORS.Border
-outline.Thickness = 1.5
-outline.Parent = window
+local sizeLimit = Instance.new("UISizeConstraint")
+sizeLimit.MinSize = Vector2.new(340, 300)
+sizeLimit.MaxSize = Vector2.new(1100, 760)
+sizeLimit.Parent = window
 
 local header = Instance.new("Frame")
 header.Name = "Header"
-header.Size = UDim2.new(1, 0, 0, 82)
+header.Size = UDim2.new(1, 0, 0, 78)
 header.BackgroundColor3 = COLORS.Header
 header.BorderSizePixel = 0
 header.Active = true
 header.ZIndex = 2
 header.Parent = window
 
-local title = Instance.new("TextLabel")
-title.Name = "Title"
-title.Position = UDim2.fromOffset(22, -8)
-title.Size = UDim2.new(0, 220, 1, 0)
-title.BackgroundTransparency = 1
-title.Text = "GUMBALL"
-title.TextColor3 = COLORS.White
-title.TextSize = 27
-title.Font = Enum.Font.GothamBold
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.ZIndex = 3
-title.Parent = header
+label(
+	header,
+	"Title",
+	"GUMBALL",
+	UDim2.new(0, 205, 0, 38),
+	UDim2.fromOffset(20, 7),
+	Enum.Font.GothamBold,
+	COLORS.White
+).TextSize = 25
+
+label(
+	header,
+	"Subtitle",
+	"VISUAL CONTROL",
+	UDim2.new(0, 205, 0, 17),
+	UDim2.fromOffset(22, 43),
+	Enum.Font.GothamMedium,
+	COLORS.Muted
+).TextSize = 9
 
 local tabs = Instance.new("ScrollingFrame")
-tabs.Name = "Categories"
-tabs.Position = UDim2.new(0, 260, 0, 0)
-tabs.Size = UDim2.new(1, -272, 1, 0)
+tabs.Name = "Tabs"
+tabs.Position = UDim2.new(0, 220, 0, 0)
+tabs.Size = UDim2.new(1, -228, 1, 0)
 tabs.BackgroundTransparency = 1
 tabs.BorderSizePixel = 0
 tabs.ScrollBarThickness = 0
 tabs.ScrollingDirection = Enum.ScrollingDirection.X
-tabs.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
 tabs.AutomaticCanvasSize = Enum.AutomaticSize.X
-tabs.CanvasSize = UDim2.new(0, 0, 0, 0)
+tabs.CanvasSize = UDim2.new()
 tabs.Active = true
 tabs.ZIndex = 3
 tabs.Parent = header
@@ -106,647 +142,753 @@ tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 5)
 tabLayout.Parent = tabs
 
-local divider = Instance.new("Frame")
-divider.Name = "HeaderDivider"
-divider.Position = UDim2.new(0, 0, 1, -1)
-divider.Size = UDim2.new(1, 0, 0, 1)
-divider.BackgroundColor3 = COLORS.Divider
-divider.BorderSizePixel = 0
-divider.ZIndex = 4
-divider.Parent = header
+local headerLine = Instance.new("Frame")
+headerLine.Name = "HeaderDivider"
+headerLine.Position = UDim2.new(0, 0, 1, -1)
+headerLine.Size = UDim2.new(1, 0, 0, 1)
+headerLine.BackgroundColor3 = COLORS.Divider
+headerLine.BorderSizePixel = 0
+headerLine.ZIndex = 4
+headerLine.Parent = header
 
 local content = Instance.new("Frame")
 content.Name = "Content"
-content.Position = UDim2.new(0, 0, 0, 82)
-content.Size = UDim2.new(1, 0, 1, -82)
-content.BackgroundColor3 = COLORS.Content
-content.BorderSizePixel = 0
+content.Position = UDim2.new(0, 0, 0, 78)
+content.Size = UDim2.new(1, 0, 1, -78)
+content.BackgroundTransparency = 1
 content.Parent = window
 
 local categoryNames = {
-	"Main", "World", "ESP", "Visuals",
-	"Character", "Misc", "Settings"
+	"Main",
+	"World",
+	"ESP",
+	"Visuals",
+	"Character",
+	"Misc",
+	"Settings",
 }
 
 local tabWidths = {
-	Main = 88,
-	World = 88,
-	ESP = 78,
-	Visuals = 96,
-	Character = 116,
-	Misc = 78,
-	Settings = 104,
+	Main = 76,
+	World = 76,
+	ESP = 65,
+	Visuals = 82,
+	Character = 100,
+	Misc = 70,
+	Settings = 88,
 }
 
-local tabButtons = {}
-local pageFrames = {}
-local selectedTab = "Main"
+local pages = {}
+local tabParts = {}
+local currentTab = "Main"
 
-local function makeLabel(
-	parent,
-	name,
-	text,
-	position,
-	size,
-	textSize,
-	color,
-	font
-)
-	local label = Instance.new("TextLabel")
-	label.Name = name
-	label.Position = position
-	label.Size = size
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.TextColor3 = color or COLORS.White
-	label.TextSize = textSize or 14
-	label.Font = font or Enum.Font.Gotham
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.TextYAlignment = Enum.TextYAlignment.Center
-	label.Parent = parent
-	return label
-end
-
--- Create all pages before building their controls.
+-- Every tab is vertically scrollable.
 for _, name in ipairs(categoryNames) do
-	local page = Instance.new("Frame")
+	local page = Instance.new("ScrollingFrame")
 	page.Name = name .. "Page"
 	page.Size = UDim2.fromScale(1, 1)
 	page.BackgroundTransparency = 1
-	page.Visible = name == selectedTab
+	page.BorderSizePixel = 0
+	page.ScrollBarThickness = 4
+	page.ScrollBarImageColor3 = COLORS.Muted
+	page.ScrollingDirection = Enum.ScrollingDirection.Y
+	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	page.CanvasSize = UDim2.new()
+	page.Active = true
+	page.Visible = name == currentTab
 	page.Parent = content
 
-	pageFrames[name] = page
+	local padding = Instance.new("UIPadding")
+	padding.PaddingTop = UDim.new(0, 16)
+	padding.PaddingBottom = UDim.new(0, 20)
+	padding.PaddingLeft = UDim.new(0, 16)
+	padding.PaddingRight = UDim.new(0, 16)
+	padding.Parent = page
+
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Vertical
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 12)
+	layout.Parent = page
+
+	pages[name] = page
 end
 
 local function selectTab(name)
-	selectedTab = name
+	currentTab = name
 
-	for tabName, parts in pairs(tabButtons) do
-		local active = tabName == selectedTab
-		parts.Label.TextColor3 =
-			active and COLORS.White or COLORS.Inactive
-		parts.Underline.Visible = active
+	for tabName, parts in pairs(tabParts) do
+		local active = tabName == currentTab
+		parts.TextColor3 = active and COLORS.White or COLORS.Inactive
+		parts.Line.Visible = active
 	end
 
-	for pageName, page in pairs(pageFrames) do
-		page.Visible = pageName == selectedTab
+	for pageName, page in pairs(pages) do
+		page.Visible = pageName == currentTab
 	end
 end
 
-for index, name in ipairs(categoryNames) do
+for i, name in ipairs(categoryNames) do
 	local button = Instance.new("TextButton")
 	button.Name = name .. "Tab"
-	button.LayoutOrder = index
-	button.Size = UDim2.new(0, tabWidths[name], 1, 0)
+	button.LayoutOrder = i
+	button.Size = UDim2.new(0, tabWidths[name], 0, 46)
 	button.BackgroundTransparency = 1
 	button.BorderSizePixel = 0
-	button.Text = ""
+	button.Text = name
+	button.TextColor3 = COLORS.Inactive
+	button.TextSize = 12
+	button.Font = Enum.Font.GothamMedium
 	button.AutoButtonColor = false
 	button.ZIndex = 4
 	button.Parent = tabs
 
-	local label = Instance.new("TextLabel")
-	label.Name = "Label"
-	label.Size = UDim2.new(1, 0, 1, -12)
-	label.BackgroundTransparency = 1
-	label.Text = name
-	label.TextColor3 = COLORS.Inactive
-	label.TextSize = 15
-	label.Font = Enum.Font.Gotham
-	label.TextXAlignment = Enum.TextXAlignment.Center
-	label.ZIndex = 5
-	label.Parent = button
-
 	local underline = Instance.new("Frame")
-	underline.Name = "Underline"
+	underline.Name = "ActiveLine"
 	underline.AnchorPoint = Vector2.new(0.5, 1)
-	underline.Position = UDim2.new(0.5, 0, 1, -8)
-	underline.Size = UDim2.new(1, -8, 0, 3)
-	underline.BackgroundColor3 = COLORS.White
+	underline.Position = UDim2.new(0.5, 0, 1, -4)
+	underline.Size = UDim2.new(1, -12, 0, 3)
+	underline.BackgroundColor3 = COLORS.Green
 	underline.BorderSizePixel = 0
 	underline.Visible = false
-	underline.ZIndex = 6
+	underline.ZIndex = 5
 	underline.Parent = button
+	corner(underline, 2)
 
-	tabButtons[name] = {
+	tabParts[name] = {
 		Button = button,
-		Label = label,
-		Underline = underline,
+		TextColor3 = COLORS.Inactive,
+		Line = underline,
 	}
+
+	-- Store the actual button so selection updates the text color.
+	tabParts[name].Button = button
 
 	button.Activated:Connect(function()
 		selectTab(name)
 	end)
 end
 
-selectTab(selectedTab)
+-- Fix active-tab text color without relying on a custom property.
+for name, parts in pairs(tabParts) do
+	parts.SetActive = function(active)
+		parts.Button.TextColor3 = active and COLORS.White or COLORS.Inactive
+		parts.Line.Visible = active
+	end
+end
 
--- WORLD TAB
--- This section runs after pageFrames.World is created.
-local worldPage = pageFrames["World"]
+selectTab = function(name)
+	currentTab = name
 
-if worldPage then
-	makeLabel(
-		worldPage,
-		"WorldTitle",
-		"WORLD SETTINGS",
-		UDim2.fromOffset(24, 18),
-		UDim2.new(1, -48, 0, 26),
-		17,
-		COLORS.White,
-		Enum.Font.GothamBold
-	)
-
-	makeLabel(
-		worldPage,
-		"WorldSubtitle",
-		"Local visual settings",
-		UDim2.fromOffset(24, 44),
-		UDim2.new(1, -48, 0, 20),
-		12,
-		COLORS.Inactive
-	)
-
-	local worldLine = Instance.new("Frame")
-	worldLine.Position = UDim2.fromOffset(24, 72)
-	worldLine.Size = UDim2.new(1, -48, 0, 1)
-	worldLine.BackgroundColor3 = COLORS.Divider
-	worldLine.BorderSizePixel = 0
-	worldLine.Parent = worldPage
-
-	local Lighting = game:GetService("Lighting")
-
-	local function worldButton(name, caption, x, y, width, callback)
-		local button = Instance.new("TextButton")
-		button.Name = name
-		button.Position = UDim2.fromOffset(x, y)
-		button.Size = UDim2.new(0, width, 0, 36)
-		button.BackgroundColor3 = COLORS.Selected
-		button.BorderSizePixel = 0
-		button.Text = caption
-		button.TextColor3 = COLORS.White
-		button.TextSize = 12
-		button.Font = Enum.Font.GothamMedium
-		button.Parent = worldPage
-
-		Instance.new("UICorner", button).CornerRadius =
-			UDim.new(0, 7)
-
-		local stroke = Instance.new("UIStroke")
-		stroke.Color = COLORS.Border
-		stroke.Thickness = 1
-		stroke.Parent = button
-
-		button.Activated:Connect(callback)
-		return button
+	for tabName, parts in pairs(tabParts) do
+		local active = tabName == currentTab
+		parts.Button.TextColor3 = active and COLORS.White or COLORS.Inactive
+		parts.Line.Visible = active
 	end
 
-	local function worldToggle(name, y, getValue, setValue)
-		makeLabel(
-			worldPage,
-			name .. "Label",
-			name,
-			UDim2.fromOffset(24, y),
-			UDim2.new(1, -140, 0, 34),
-			13,
-			COLORS.White,
-			Enum.Font.GothamMedium
+	for pageName, page in pairs(pages) do
+		page.Visible = pageName == currentTab
+	end
+end
+
+-- Cards flow vertically, so no controls are hidden below the page.
+local function makeSection(page, titleText, description)
+	local card = Instance.new("Frame")
+	card.Name = titleText:gsub("%W", "") .. "Section"
+	card.Size = UDim2.new(1, -2, 0, 0)
+	card.AutomaticSize = Enum.AutomaticSize.Y
+	card.BackgroundColor3 = COLORS.Card
+	card.BorderSizePixel = 0
+	card.Parent = page
+	corner(card, 9)
+	stroke(card, COLORS.Border, 1)
+
+	local heading = label(
+		card,
+		"SectionTitle",
+		titleText,
+		UDim2.new(1, -28, 0, 22),
+		UDim2.fromOffset(14, 10),
+		Enum.Font.GothamBold,
+		COLORS.White
+	)
+	heading.TextSize = 13
+
+	if description then
+		local desc = label(
+			card,
+			"SectionDescription",
+			description,
+			UDim2.new(1, -28, 0, 18),
+			UDim2.fromOffset(14, 32),
+			Enum.Font.Gotham,
+			COLORS.Muted
 		)
+		desc.TextSize = 10
+	end
 
-		local button = worldButton(
-			name .. "Toggle",
-			"OFF",
-			0,
-			y,
-			68,
-			function() end
-		)
+	local rows = Instance.new("Frame")
+	rows.Name = "Rows"
+	rows.Position = UDim2.fromOffset(12, description and 58 or 36)
+	rows.Size = UDim2.new(1, -24, 0, 0)
+	rows.AutomaticSize = Enum.AutomaticSize.Y
+	rows.BackgroundTransparency = 1
+	rows.Parent = card
 
-		button.AnchorPoint = Vector2.new(1, 0)
-		button.Position = UDim2.new(1, -24, 0, y)
+	local rowsLayout = Instance.new("UIListLayout")
+	rowsLayout.FillDirection = Enum.FillDirection.Vertical
+	rowsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	rowsLayout.Padding = UDim.new(0, 6)
+	rowsLayout.Parent = rows
 
-		local function refresh()
-			local on = getValue()
-			button.Text = on and "ON" or "OFF"
-			button.BackgroundColor3 =
-				on and COLORS.Green or COLORS.Selected
-			button.TextColor3 =
-				on and COLORS.Background or COLORS.White
+	return card, rows
+end
+
+local function makeToggle(rows, name, description, callback)
+	local row = Instance.new("Frame")
+	row.Name = name:gsub("%W", "") .. "Row"
+	row.Size = UDim2.new(1, 0, 0, 48)
+	row.BackgroundColor3 = COLORS.Row
+	row.BorderSizePixel = 0
+	row.Parent = rows
+	corner(row, 7)
+
+	local titleLabel = label(
+		row,
+		"Title",
+		name,
+		UDim2.new(1, -100, 0, 21),
+		UDim2.fromOffset(10, 5),
+		Enum.Font.GothamMedium,
+		COLORS.White
+	)
+	titleLabel.TextSize = 11
+
+	local descLabel = label(
+		row,
+		"Description",
+		description or "",
+		UDim2.new(1, -100, 0, 17),
+		UDim2.fromOffset(10, 26),
+		Enum.Font.Gotham,
+		COLORS.Muted
+	)
+	descLabel.TextSize = 9
+
+	local button = Instance.new("TextButton")
+	button.Name = "Toggle"
+	button.AnchorPoint = Vector2.new(1, 0.5)
+	button.Position = UDim2.new(1, -8, 0.5, 0)
+	button.Size = UDim2.fromOffset(54, 27)
+	button.BackgroundColor3 = COLORS.Selected
+	button.BorderSizePixel = 0
+	button.Text = "OFF"
+	button.TextColor3 = COLORS.Inactive
+	button.TextSize = 10
+	button.Font = Enum.Font.GothamBold
+	button.AutoButtonColor = false
+	button.Parent = row
+	corner(button, 6)
+	stroke(button, COLORS.Border, 1)
+
+	-- All toggles start OFF.
+	local enabled = false
+
+	local function refresh()
+		button.Text = enabled and "ON" or "OFF"
+		button.BackgroundColor3 = enabled and COLORS.Green or COLORS.Selected
+		button.TextColor3 = enabled and COLORS.Background or COLORS.Inactive
+	end
+
+	button.Activated:Connect(function()
+		enabled = not enabled
+		refresh()
+		if callback then
+			callback(enabled)
+		end
+	end)
+
+	refresh()
+	return button
+end
+
+local function makeSlider(rows, name, minValue, maxValue, callback)
+	local row = Instance.new("Frame")
+	row.Name = name:gsub("%W", "") .. "Slider"
+	row.Size = UDim2.new(1, 0, 0, 62)
+	row.BackgroundColor3 = COLORS.Row
+	row.BorderSizePixel = 0
+	row.Parent = rows
+	corner(row, 7)
+
+	local titleLabel = label(
+		row,
+		"Title",
+		name,
+		UDim2.new(1, -64, 0, 21),
+		UDim2.fromOffset(10, 4),
+		Enum.Font.GothamMedium,
+		COLORS.White
+	)
+	titleLabel.TextSize = 11
+
+	local valueLabel = label(
+		row,
+		"Value",
+		"0",
+		UDim2.new(0, 44, 0, 21),
+		UDim2.new(1, -54, 0, 4),
+		Enum.Font.GothamBold,
+		COLORS.Green
+	)
+	valueLabel.TextSize = 11
+	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+	local track = Instance.new("TextButton")
+	track.Name = "Track"
+	track.Position = UDim2.new(0, 10, 0, 36)
+	track.Size = UDim2.new(1, -20, 0, 10)
+	track.BackgroundColor3 = COLORS.Selected
+	track.BorderSizePixel = 0
+	track.Text = ""
+	track.AutoButtonColor = false
+	track.ClipsDescendants = false
+	track.Parent = row
+	corner(track, 5)
+
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.Size = UDim2.new(0, 0, 1, 0)
+	fill.BackgroundColor3 = COLORS.Green
+	fill.BorderSizePixel = 0
+	fill.Parent = track
+	corner(fill, 5)
+
+	local knob = Instance.new("Frame")
+	knob.Name = "Knob"
+	knob.AnchorPoint = Vector2.new(0.5, 0.5)
+	knob.Position = UDim2.new(0, 0, 0.5, 0)
+	knob.Size = UDim2.fromOffset(12, 12)
+	knob.BackgroundColor3 = COLORS.White
+	knob.BorderSizePixel = 0
+	knob.Parent = track
+	corner(knob, 6)
+	stroke(knob, COLORS.Green, 1)
+
+	-- Every slider starts at 0.
+	local value = 0
+	local draggingSlider = false
+
+	local function setValue(newValue)
+		value = math.clamp(newValue, minValue, maxValue)
+		local fraction = 0
+
+		if maxValue > minValue then
+			fraction = (value - minValue) / (maxValue - minValue)
 		end
 
-		button.Activated:Connect(function()
-			setValue(not getValue())
-			refresh()
-		end)
+		fill.Size = UDim2.new(fraction, 0, 1, 0)
+		knob.Position = UDim2.new(fraction, 0, 0.5, 0)
+		valueLabel.Text = tostring(math.floor(value * 100 + 0.5) / 100)
 
-		refresh()
+		if callback then
+			callback(value)
+		end
 	end
+
+	local function updateFromInput(input)
+		local width = track.AbsoluteSize.X
+		if width <= 0 then
+			return
+		end
+
+		local fraction = math.clamp(
+			(input.Position.X - track.AbsolutePosition.X) / width,
+			0,
+			1
+		)
+
+		setValue(minValue + fraction * (maxValue - minValue))
+	end
+
+	track.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			draggingSlider = true
+			updateFromInput(input)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if draggingSlider and (
+			input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch
+		) then
+			updateFromInput(input)
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			draggingSlider = false
+		end
+	end)
+
+	-- Set the visual position to zero without applying a nonzero value.
+	setValue(0)
+	return function()
+		return value
+	end
+end
+
+local function makeButton(rows, name, callback)
+	local button = Instance.new("TextButton")
+	button.Name = name:gsub("%W", "") .. "Button"
+	button.Size = UDim2.new(1, 0, 0, 36)
+	button.BackgroundColor3 = COLORS.Selected
+	button.BorderSizePixel = 0
+	button.Text = name
+	button.TextColor3 = COLORS.White
+	button.TextSize = 11
+	button.Font = Enum.Font.GothamMedium
+	button.AutoButtonColor = false
+	button.Parent = rows
+	corner(button, 7)
+	stroke(button, COLORS.Border, 1)
+
+	button.Activated:Connect(function()
+		if callback then
+			callback()
+		end
+	end)
+
+	return button
+end
+
+-- MAIN TAB
+do
+	local _, rows = makeSection(
+		pages.Main,
+		"GUMBALL MENU",
+		"Dark interface • Clean layout • Scrollable controls"
+	)
+
+	makeButton(rows, "Hide / Show Menu (Right Shift)", function()
+		window.Visible = not window.Visible
+	end)
+
+	makeButton(rows, "Reset Tab Scroll", function()
+		for _, page in pairs(pages) do
+			page.CanvasPosition = Vector2.new(0, 0)
+		end
+	end)
+end
+
+-- WORLD TAB
+do
+	local _, lightingRows = makeSection(
+		pages.World,
+		"LIGHTING",
+		"Adjust local lighting values. Sliders start at zero."
+	)
+
+	makeSlider(lightingRows, "Brightness", 0, 10, function(value)
+		Lighting.Brightness = value
+	end)
+
+	makeSlider(lightingRows, "Exposure Compensation", 0, 5, function(value)
+		Lighting.ExposureCompensation = value
+	end)
+
+	makeSlider(lightingRows, "Clock Time", 0, 24, function(value)
+		Lighting.ClockTime = value
+	end)
+
+	local _, postRows = makeSection(
+		pages.World,
+		"POST PROCESSING",
+		"Every effect starts disabled."
+	)
 
 	local function getEffect(className, effectName)
 		local effect = Lighting:FindFirstChild(effectName)
-
 		if not effect then
 			effect = Instance.new(className)
 			effect.Name = effectName
+			effect.Enabled = false
 			effect.Parent = Lighting
 		end
-
 		return effect
 	end
 
-	local bloom = getEffect("BloomEffect", "GumballWorldBloom")
+	local bloom = getEffect("BloomEffect", "Gumball_Bloom")
 	local colorCorrection = getEffect(
 		"ColorCorrectionEffect",
-		"GumballWorldColorCorrection"
+		"Gumball_ColorCorrection"
 	)
-	local sunRays = getEffect("SunRaysEffect", "GumballWorldSunRays")
-
-	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-
-	if not atmosphere then
-		atmosphere = Instance.new("Atmosphere")
-		atmosphere.Name = "GumballWorldAtmosphere"
-		atmosphere.Parent = Lighting
-	end
-
-	worldToggle(
-		"Bloom",
-		92,
-		function()
-			return bloom.Enabled
-		end,
-		function(value)
-			bloom.Enabled = value
-		end
+	local sunRays = getEffect("SunRaysEffect", "Gumball_SunRays")
+	local depthOfField = getEffect(
+		"DepthOfFieldEffect",
+		"Gumball_DepthOfField"
 	)
 
-	worldToggle(
+	bloom.Enabled = false
+	colorCorrection.Enabled = false
+	sunRays.Enabled = false
+	depthOfField.Enabled = false
+
+	makeToggle(postRows, "Bloom", "Soft glow around bright objects.", function(on)
+		bloom.Enabled = on
+	end)
+
+	makeToggle(
+		postRows,
 		"Color Correction",
-		132,
-		function()
-			return colorCorrection.Enabled
-		end,
-		function(value)
-			colorCorrection.Enabled = value
+		"Color tint and contrast effect.",
+		function(on)
+			colorCorrection.Enabled = on
 		end
 	)
 
-	worldToggle(
-		"Sun Rays",
-		172,
-		function()
-			return sunRays.Enabled
-		end,
-		function(value)
-			sunRays.Enabled = value
+	makeToggle(postRows, "Sun Rays", "Light rays from bright areas.", function(on)
+		sunRays.Enabled = on
+	end)
+
+	makeToggle(
+		postRows,
+		"Depth of Field",
+		"Blur based on camera distance.",
+		function(on)
+			depthOfField.Enabled = on
 		end
 	)
 
-	worldToggle(
-		"Atmosphere",
-		212,
-		function()
-			return atmosphere.Density > 0
-		end,
-		function(value)
-			atmosphere.Density = value and 0.3 or 0
-		end
+	makeSlider(postRows, "Bloom Intensity", 0, 10, function(value)
+		bloom.Intensity = value
+	end)
+
+	makeSlider(postRows, "Saturation", 0, 2, function(value)
+		colorCorrection.Saturation = value
+	end)
+
+	makeSlider(postRows, "Contrast", 0, 2, function(value)
+		colorCorrection.Contrast = value
+	end)
+
+	makeSlider(postRows, "Effect Brightness", 0, 2, function(value)
+		colorCorrection.Brightness = value
+	end)
+
+	local _, skyRows = makeSection(
+		pages.World,
+		"SKY & WEATHER",
+		"Choose a simple local time preset or reset the effects."
 	)
 
-	makeLabel(
-		worldPage,
-		"TimeLabel",
-		"Time of day",
-		UDim2.fromOffset(24, 262),
-		UDim2.new(1, -48, 0, 22),
-		13,
-		COLORS.White,
-		Enum.Font.GothamMedium
-	)
-
-	worldButton("MorningButton", "MORNING", 24, 292, 100, function()
+	makeButton(skyRows, "Morning Preset", function()
 		Lighting.ClockTime = 9
 	end)
 
-	worldButton("DayButton", "DAY", 132, 292, 76, function()
+	makeButton(skyRows, "Day Preset", function()
 		Lighting.ClockTime = 14
 	end)
 
-	worldButton("SunsetButton", "SUNSET", 216, 292, 88, function()
+	makeButton(skyRows, "Sunset Preset", function()
 		Lighting.ClockTime = 18
 	end)
 
-	worldButton("NightButton", "NIGHT", 312, 292, 80, function()
+	makeButton(skyRows, "Night Preset", function()
 		Lighting.ClockTime = 0
 	end)
 
-	makeLabel(
-		worldPage,
-		"BrightnessLabel",
-		"Brightness",
-		UDim2.fromOffset(24, 348),
-		UDim2.new(0, 150, 0, 24),
-		13,
-		COLORS.White,
-		Enum.Font.GothamMedium
-	)
-
-	local brightnessValue = makeLabel(
-		worldPage,
-		"BrightnessValue",
-		tostring(Lighting.Brightness),
-		UDim2.new(1, -84, 0, 348),
-		UDim2.fromOffset(60, 24),
-		12,
-		COLORS.Inactive
-	)
-
-	worldButton("BrightnessDown", "−", 24, 378, 44, function()
-		Lighting.Brightness = math.max(
-			0,
-			Lighting.Brightness - 0.25
-		)
-		brightnessValue.Text = string.format(
-			"%.2f",
-			Lighting.Brightness
-		)
-	end)
-
-	worldButton("BrightnessUp", "+", 76, 378, 44, function()
-		Lighting.Brightness = math.min(
-			10,
-			Lighting.Brightness + 0.25
-		)
-		brightnessValue.Text = string.format(
-			"%.2f",
-			Lighting.Brightness
-		)
-	end)
-
-	worldButton("ResetWorld", "RESET VISUALS", 140, 378, 140, function()
-		Lighting.ClockTime = 14
-		Lighting.Brightness = 2
+	makeButton(skyRows, "Reset World Effects", function()
 		bloom.Enabled = false
 		colorCorrection.Enabled = false
 		sunRays.Enabled = false
-		atmosphere.Density = 0.3
+		depthOfField.Enabled = false
 
-		brightnessValue.Text = string.format(
-			"%.2f",
-			Lighting.Brightness
-		)
+		bloom.Intensity = 0
+		colorCorrection.Saturation = 0
+		colorCorrection.Contrast = 0
+		colorCorrection.Brightness = 0
+
+		Lighting.Brightness = 0
+		Lighting.ExposureCompensation = 0
+		Lighting.ClockTime = 0
 	end)
 end
 
-tabs.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseWheel then
-		local maxScroll = math.max(
-			0,
-			tabs.AbsoluteCanvasSize.X - tabs.AbsoluteSize.X
-		)
+-- ESP TAB
+do
+	local _, rows = makeSection(
+		pages.ESP,
+		"ESP SETTINGS",
+		"UI controls are OFF by default."
+	)
 
-		tabs.CanvasPosition = Vector2.new(
-			math.clamp(
-				tabs.CanvasPosition.X - input.Position.Z * 55,
-				0,
-				maxScroll
-			),
-			0
-		)
-	end
-end)
+	makeToggle(rows, "Player ESP", "Toggle placeholder for your own project.")
+	makeToggle(rows, "Show Names", "Toggle placeholder for your own project.")
+	makeToggle(rows, "Show Distance", "Toggle placeholder for your own project.")
+	makeToggle(rows, "Show Boxes", "Toggle placeholder for your own project.")
+end
+
+-- VISUALS TAB
+do
+	local _, rows = makeSection(
+		pages.Visuals,
+		"VISUAL SETTINGS",
+		"Visual controls start disabled."
+	)
+
+	makeToggle(rows, "Full Bright", "Applies brighter local lighting.", function(on)
+		if on then
+			Lighting.Brightness = 0
+			Lighting.ExposureCompensation = 0
+		end
+	end)
+
+	makeToggle(rows, "Remove Fog", "Toggle local fog visibility.", function(on)
+		if on then
+			Lighting.FogStart = 0
+			Lighting.FogEnd = 100000
+		end
+	end)
+
+	makeSlider(rows, "Field of View", 0, 120, function(value)
+		local camera = workspace.CurrentCamera
+		if camera then
+			camera.FieldOfView = value
+		end
+	end)
+end
+
+-- CHARACTER TAB
+do
+	local _, rows = makeSection(
+		pages.Character,
+		"CHARACTER SETTINGS",
+		"Sliders start at zero; toggles start OFF."
+	)
+
+	makeToggle(rows, "Movement Option", "Placeholder toggle for your own experience.")
+	makeSlider(rows, "Walk Speed", 0, 100, function(value)
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = value
+		end
+	end)
+
+	makeSlider(rows, "Jump Power", 0, 150, function(value)
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = value
+		end
+	end)
+end
 
 -- MISC TAB
-local miscPage = pageFrames.Misc
+do
+	local _, rows = makeSection(
+		pages.Misc,
+		"MISCELLANEOUS",
+		"General menu controls."
+	)
 
-makeLabel(
-	miscPage,
-	"SectionTitle",
-	"UNLOCK ALL",
-	UDim2.fromOffset(24, 18),
-	UDim2.new(1, -48, 0, 26),
-	17,
-	COLORS.White,
-	Enum.Font.GothamBold
-)
-
-makeLabel(
-	miscPage,
-	"SectionSubtitle",
-	"Cosmetic unlock settings",
-	UDim2.fromOffset(24, 44),
-	UDim2.new(1, -48, 0, 20),
-	12,
-	COLORS.Inactive
-)
-
-local sectionLine = Instance.new("Frame")
-sectionLine.Position = UDim2.fromOffset(24, 72)
-sectionLine.Size = UDim2.new(1, -48, 0, 1)
-sectionLine.BackgroundColor3 = COLORS.Divider
-sectionLine.BorderSizePixel = 0
-sectionLine.Parent = miscPage
-
-local status
-local selectedTypes = {}
-local selectedRarities = {
-	Legendary = true,
-	Mythical = true,
-	Unobtainable = true,
-}
-
-local function makeChips(parent, options, startY, selectedMap, prefix)
-	local chipFrame = Instance.new("Frame")
-	chipFrame.Name = prefix .. "Options"
-	chipFrame.Position = UDim2.fromOffset(24, startY)
-	chipFrame.Size = UDim2.new(1, -48, 0, 72)
-	chipFrame.BackgroundTransparency = 1
-	chipFrame.Parent = parent
-
-	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.new(0, 132, 0, 28)
-	grid.CellPadding = UDim2.fromOffset(8, 8)
-	grid.SortOrder = Enum.SortOrder.LayoutOrder
-	grid.Parent = chipFrame
-
-	for i, option in ipairs(options) do
-		local chip = Instance.new("TextButton")
-		chip.Name = option .. "Option"
-		chip.LayoutOrder = i
-		chip.BackgroundColor3 =
-			selectedMap[option] and COLORS.Selected or COLORS.Background
-		chip.BorderSizePixel = 0
-		chip.Text = option
-		chip.TextColor3 =
-			selectedMap[option] and COLORS.White or COLORS.Inactive
-		chip.TextSize = 11
-		chip.Font = Enum.Font.Gotham
-		chip.Parent = chipFrame
-
-		Instance.new("UICorner", chip).CornerRadius =
-			UDim.new(0, 6)
-
-		local stroke = Instance.new("UIStroke")
-		stroke.Color =
-			selectedMap[option] and COLORS.White or COLORS.Border
-		stroke.Thickness = 1
-		stroke.Parent = chip
-
-		chip.Activated:Connect(function()
-			selectedMap[option] = not selectedMap[option]
-
-			chip.BackgroundColor3 =
-				selectedMap[option] and COLORS.Selected or COLORS.Background
-			chip.TextColor3 =
-				selectedMap[option] and COLORS.White or COLORS.Inactive
-			stroke.Color =
-				selectedMap[option] and COLORS.White or COLORS.Border
-		end)
-	end
-end
-
-makeChips(
-	miscPage,
-	{"Skins", "Wraps", "Charms", "Finishers", "Emotes"},
-	270,
-	selectedTypes,
-	"Type"
-)
-
-makeLabel(
-	miscPage,
-	"RaritiesTitle",
-	"Cosmetic Rarities to Unlock",
-	UDim2.fromOffset(24, 354),
-	UDim2.new(1, -48, 0, 22),
-	13,
-	COLORS.White,
-	Enum.Font.GothamMedium
-)
-
-makeLabel(
-	miscPage,
-	"RaritiesHint",
-	"Legendary, Mythical and Unobtainable selected by default",
-	UDim2.fromOffset(24, 376),
-	UDim2.new(1, -48, 0, 18),
-	11,
-	COLORS.Inactive
-)
-
-makeChips(
-	miscPage,
-	{
-		"Common",
-		"Uncommon",
-		"Rare",
-		"Epic",
-		"Legendary",
-		"Mythical",
-		"Unobtainable",
-	},
-	400,
-	selectedRarities,
-	"Rarity"
-)
-
-status = makeLabel(
-	miscPage,
-	"Status",
-	"Ready. Unlock All requires your own game catalog and server script.",
-	UDim2.new(0, 24, 1, -34),
-	UDim2.new(1, -48, 0, 22),
-	11,
-	COLORS.Amber
-)
-status.TextWrapped = true
-
-local unlockAllButton = Instance.new("TextButton")
-unlockAllButton.Name = "UnlockAllButton"
-unlockAllButton.Position = UDim2.new(1, -204, 0, 88)
-unlockAllButton.Size = UDim2.fromOffset(180, 42)
-unlockAllButton.BackgroundColor3 = COLORS.Green
-unlockAllButton.BorderSizePixel = 0
-unlockAllButton.Text = "UNLOCK ALL"
-unlockAllButton.TextColor3 = COLORS.Background
-unlockAllButton.TextSize = 13
-unlockAllButton.Font = Enum.Font.GothamBold
-unlockAllButton.Parent = miscPage
-
-Instance.new("UICorner", unlockAllButton).CornerRadius =
-	UDim.new(0, 8)
-
-local unlockAllStroke = Instance.new("UIStroke")
-unlockAllStroke.Color = COLORS.Border
-unlockAllStroke.Thickness = 1
-unlockAllStroke.Parent = unlockAllButton
-
-unlockAllButton.Activated:Connect(function()
-	if not unlockRemote or not unlockRemote:IsA("RemoteFunction") then
-		status.Text = "Missing GumballUnlockCosmetics RemoteFunction."
-		status.TextColor3 = COLORS.Amber
-		return
-	end
-
-	unlockAllButton.Text = "UNLOCKING..."
-
-	local ok, result = pcall(function()
-		return unlockRemote:InvokeServer({
-			enabled = true,
-			types = {},
-			rarities = {},
-		})
+	makeButton(rows, "Reset All World Effects", function()
+		for _, name in ipairs({
+			"Gumball_Bloom",
+			"Gumball_ColorCorrection",
+			"Gumball_SunRays",
+			"Gumball_DepthOfField",
+		}) do
+			local effect = Lighting:FindFirstChild(name)
+			if effect and effect:IsA("PostEffect") then
+				effect.Enabled = false
+			end
+		end
 	end)
 
-	unlockAllButton.Text = "UNLOCK ALL"
+	local unlockStatus = label(
+		rows,
+		"UnlockStatus",
+		"Cosmetic unlocking requires a server-side system in an experience you control.",
+		UDim2.new(1, -16, 0, 40),
+		UDim2.fromOffset(8, 0),
+		Enum.Font.Gotham,
+		COLORS.Amber
+	)
+	unlockStatus.TextWrapped = true
+	unlockStatus.TextSize = 10
 
-	if ok and result then
-		status.Text = result.message or "Unlock request completed."
-		status.TextColor3 =
-			result.ok == false and COLORS.Amber or COLORS.Green
-	else
-		status.Text = "Unlock request failed. Check the server script and Output."
-		status.TextColor3 = COLORS.Amber
-	end
-end)
-
-if not unlockRemote or not unlockRemote:IsA("RemoteFunction") then
-	status.Text =
-		"Missing ReplicatedStorage.GumballUnlockCosmetics RemoteFunction. Add the companion ServerScript."
-	status.TextColor3 = COLORS.Amber
+	makeButton(rows, "Check Unlock Remote", function()
+		if unlockRemote and unlockRemote:IsA("RemoteFunction") then
+			unlockStatus.Text = "Unlock RemoteFunction found."
+			unlockStatus.TextColor3 = COLORS.Green
+		else
+			unlockStatus.Text = "No RemoteFunction found. This UI cannot unlock inventory items by itself."
+			unlockStatus.TextColor3 = COLORS.Amber
+		end
+	end)
 end
 
--- Drag window from the header
+-- SETTINGS TAB
+do
+	local _, rows = makeSection(
+		pages.Settings,
+		"INTERFACE",
+		"Menu preferences."
+	)
+
+	makeButton(rows, "Hide / Show Menu (Right Shift)", function()
+		window.Visible = not window.Visible
+	end)
+
+	makeButton(rows, "Reset Scroll Positions", function()
+		for _, page in pairs(pages) do
+			page.CanvasPosition = Vector2.new(0, 0)
+		end
+	end)
+
+	makeButton(rows, "Close Menu", function()
+		gui.Enabled = false
+	end)
+end
+
+-- Drag window from the header, excluding the tab strip.
 local dragging = false
 local dragStart
 local startPosition
 local dragInput
 
 header.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-
-		local overTabs =
-			input.Position.X >= tabs.AbsolutePosition.X
-			and input.Position.X <= tabs.AbsolutePosition.X + tabs.AbsoluteSize.X
-			and input.Position.Y >= tabs.AbsolutePosition.Y
-			and input.Position.Y <= tabs.AbsolutePosition.Y + tabs.AbsoluteSize.Y
-
-		if overTabs then
-			return
-		end
-
-		dragging = true
-		dragStart = input.Position
-		startPosition = window.Position
-
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1
+		and input.UserInputType ~= Enum.UserInputType.Touch then
+		return
 	end
+
+	local overTabs =
+		input.Position.X >= tabs.AbsolutePosition.X
+		and input.Position.X <= tabs.AbsolutePosition.X + tabs.AbsoluteSize.X
+		and input.Position.Y >= tabs.AbsolutePosition.Y
+		and input.Position.Y <= tabs.AbsolutePosition.Y + tabs.AbsoluteSize.Y
+
+	if overTabs then
+		return
+	end
+
+	dragging = true
+	dragStart = input.Position
+	startPosition = window.Position
+
+	input.Changed:Connect(function()
+		if input.UserInputState == Enum.UserInputState.End then
+			dragging = false
+		end
+	end)
 end)
 
 header.InputChanged:Connect(function(input)
@@ -759,7 +901,6 @@ end)
 UserInputService.InputChanged:Connect(function(input)
 	if dragging and input == dragInput then
 		local delta = input.Position - dragStart
-
 		window.Position = UDim2.new(
 			startPosition.X.Scale,
 			startPosition.X.Offset + delta.X,
@@ -779,27 +920,20 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 end)
 
--- Mobile toggle
+-- Mobile menu toggle.
 local mobileToggle = Instance.new("TextButton")
 mobileToggle.Name = "MobileToggle"
 mobileToggle.Position = UDim2.fromOffset(12, 70)
-mobileToggle.Size = UDim2.fromOffset(38, 38)
+mobileToggle.Size = UDim2.fromOffset(40, 40)
 mobileToggle.BackgroundColor3 = COLORS.Header
 mobileToggle.Text = "G"
 mobileToggle.TextColor3 = COLORS.White
 mobileToggle.TextSize = 17
 mobileToggle.Font = Enum.Font.GothamBold
 mobileToggle.Visible = UserInputService.TouchEnabled
-mobileToggle.AutoButtonColor = true
 mobileToggle.Parent = gui
-
-Instance.new("UICorner", mobileToggle).CornerRadius =
-	UDim.new(0, 8)
-
-local toggleBorder = Instance.new("UIStroke")
-toggleBorder.Color = COLORS.Border
-toggleBorder.Thickness = 1
-toggleBorder.Parent = mobileToggle
+corner(mobileToggle, 8)
+stroke(mobileToggle, COLORS.Border, 1)
 
 mobileToggle.Activated:Connect(function()
 	window.Visible = not window.Visible
