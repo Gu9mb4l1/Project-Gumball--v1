@@ -214,11 +214,11 @@ for index, name in ipairs(categoryNames) do
 	local underline = Instance.new("Frame")
 	underline.Name = "Underline"
 	underline.AnchorPoint = Vector2.new(0.5, 1)
-	underline.Position = UDim2.new(0.5, 0, 1, -25)
+	underline.Position = UDim2.new(0.5, 0, 2, -25)
 	underline.Size = UDim2.new(1, -8, 0, 3)
 	underline.BackgroundColor3 = COLORS.White
 	underline.BorderSizePixel = 0
-	underline.Visible = false
+	underline.Visible = true
 	underline.ZIndex = 6
 	underline.Parent = button
 
