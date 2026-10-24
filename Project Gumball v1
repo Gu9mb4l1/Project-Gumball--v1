@@ -2,7 +2,7 @@
 -- GUMBALL UI
 -- Custom UI foundation
 -- PC: Right Shift to toggle
--- Mobile: Toggle button at top-right
+-- Mobile: Toggle button at top-left
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -12,14 +12,6 @@ local Player = Players.LocalPlayer
 local IsMobile = UserInputService.TouchEnabled
 
 -- Clean up previous copy
-pcall(function()
-    local parent = gethui and gethui() or CoreGui
-    local old = parent:FindFirstChild("GumballUI")
-    if old then
-        old:Destroy()
-    end
-end)
-
 local function getParent()
     local success, result = pcall(function()
         if gethui then
@@ -35,12 +27,21 @@ local function getParent()
     return Player:WaitForChild("PlayerGui")
 end
 
+local Parent = getParent()
+
+pcall(function()
+    local old = Parent:FindFirstChild("GumballUI")
+    if old then
+        old:Destroy()
+    end
+end)
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GumballUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = getParent()
+ScreenGui.Parent = Parent
 
 -- Colors
 local BackgroundColor = Color3.fromRGB(15, 15, 15)
@@ -71,10 +72,10 @@ Header.Position = UDim2.fromOffset(12, 0)
 Header.BackgroundTransparency = 1
 Header.Parent = Window
 
--- Tabs: scroll horizontally without compressing labels
+-- Tabs: top-right, horizontally scrollable
 local TabScroll = Instance.new("ScrollingFrame")
 TabScroll.Name = "TabNavigation"
-TabScroll.Position = UDim2.fromOffset(0, 0)
+TabScroll.Position = UDim2.new(0, 115, 0, 0)
 TabScroll.Size = UDim2.new(1, -115, 1, 0)
 TabScroll.BackgroundTransparency = 1
 TabScroll.BorderSizePixel = 0
@@ -92,23 +93,22 @@ TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 TabLayout.Padding = UDim.new(0, 15)
 TabLayout.Parent = TabScroll
 
--- Padding so the indicator has room below the labels
 local TabPadding = Instance.new("UIPadding")
 TabPadding.PaddingTop = UDim.new(0, 1)
 TabPadding.PaddingBottom = UDim.new(0, 1)
 TabPadding.Parent = TabScroll
 
--- Gumball title on the right
+-- Gumball title: top-left
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Size = UDim2.new(0, 103, 0, 24)
-Title.Position = UDim2.new(1, -103, 0.5, -12)
+Title.Position = UDim2.new(0, 0, 0.5, -12)
 Title.BackgroundTransparency = 1
 Title.Text = "Gumball"
 Title.TextColor3 = TextColor
 Title.TextSize = 17
 Title.Font = Enum.Font.Gotham
-Title.TextXAlignment = Enum.TextXAlignment.Right
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 -- Header divider
@@ -120,7 +120,7 @@ HeaderLine.BackgroundColor3 = LineColor
 HeaderLine.BorderSizePixel = 0
 HeaderLine.Parent = Window
 
--- Main content begins directly below the divider
+-- Main content
 local Content = Instance.new("Frame")
 Content.Name = "Content"
 Content.Position = UDim2.fromOffset(12, 50)
@@ -128,7 +128,7 @@ Content.Size = UDim2.new(1, -24, 1, -62)
 Content.BackgroundTransparency = 1
 Content.Parent = Window
 
--- Two empty sides for each tab
+-- Left and right sides
 local LeftSide = Instance.new("Frame")
 LeftSide.Name = "LeftSide"
 LeftSide.Position = UDim2.fromOffset(0, 0)
@@ -143,9 +143,7 @@ RightSide.Size = UDim2.new(0.5, -6, 1, 0)
 RightSide.BackgroundTransparency = 1
 RightSide.Parent = Content
 
--- These category containers are intentionally empty.
--- We can add category sections here later.
-
+-- Empty tab categories will be added later
 local Tabs = {
     "Main",
     "World",
@@ -179,6 +177,7 @@ local function createTab(name, order)
     TextPadding.PaddingRight = UDim.new(0, 1)
     TextPadding.Parent = Button
 
+    -- Active-tab indicator
     local Indicator = Instance.new("Frame")
     Indicator.Name = "Indicator"
     Indicator.AnchorPoint = Vector2.new(0.5, 0)
@@ -199,11 +198,12 @@ local function createTab(name, order)
 
         for tabName, data in pairs(TabButtons) do
             local selected = tabName == ActiveTab
-            data.Button.TextColor3 = selected and TextColor or MutedColor
+            data.Button.TextColor3 =
+                selected and TextColor or MutedColor
             data.Indicator.Visible = selected
         end
 
-        -- Keep the selected tab's content area empty for now.
+        -- Tab content stays empty for now.
     end)
 end
 
@@ -214,7 +214,7 @@ end
 TabButtons.Main.Button.TextColor3 = TextColor
 TabButtons.Main.Indicator.Visible = true
 
--- Drag window with mouse or touch
+-- Drag window using mouse or touch
 local dragging = false
 local dragInput
 local dragStart
@@ -259,7 +259,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- PC toggle: Right Shift
+-- PC: Right Shift to toggle
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then
         return
@@ -270,11 +270,11 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
--- Mobile toggle button, positioned at the top-right
+-- Mobile Toggle button: top-left
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "Toggle"
 ToggleButton.Size = UDim2.fromOffset(76, 34)
-ToggleButton.Position = UDim2.new(1, -88, 0, 12)
+ToggleButton.Position = UDim2.new(0, 12, 0, 12)
 ToggleButton.BackgroundColor3 = BackgroundColor
 ToggleButton.BorderSizePixel = 0
 ToggleButton.Text = "Toggle"
