@@ -57,7 +57,7 @@ outline.Parent = window
 
 local header = Instance.new("Frame")
 header.Name = "Header"
-header.Size = UDim2.new(1, 0, 0, 82)
+header.Size = UDim2.new(1, 0, 0, 68)
 header.BackgroundColor3 = COLORS.Header
 header.BorderSizePixel = 0
 header.Active = true
@@ -105,6 +105,7 @@ tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 5)
 tabLayout.Parent = tabs
 
+-- Divider aligned with the bottom edge of the shortened header.
 local divider = Instance.new("Frame")
 divider.Name = "HeaderDivider"
 divider.Position = UDim2.new(0, 0, 1, -1)
@@ -116,8 +117,8 @@ divider.Parent = header
 
 local content = Instance.new("Frame")
 content.Name = "Content"
-content.Position = UDim2.new(0, 0, 0, 82)
-content.Size = UDim2.new(1, 0, 1, -82)
+content.Position = UDim2.new(0, 0, 0, 68)
+content.Size = UDim2.new(1, 0, 1, -68)
 content.BackgroundColor3 = COLORS.Content
 content.BorderSizePixel = 0
 content.Parent = window
