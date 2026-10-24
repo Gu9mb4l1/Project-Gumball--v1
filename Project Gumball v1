@@ -4,13 +4,11 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Remove previous menu
 local previous = playerGui:FindFirstChild("GumballUI")
 if previous then
 	previous:Destroy()
 end
 
--- Colors
 local COLORS = {
 	Background = Color3.fromRGB(9, 11, 14),
 	Header = Color3.fromRGB(10, 12, 15),
@@ -19,10 +17,8 @@ local COLORS = {
 	Divider = Color3.fromRGB(36, 39, 44),
 	White = Color3.fromRGB(245, 245, 247),
 	Inactive = Color3.fromRGB(174, 177, 184),
-	Selected = Color3.fromRGB(30, 34, 40),
 }
 
--- Main GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "GumballUI"
 gui.ResetOnSpawn = false
@@ -30,7 +26,6 @@ gui.IgnoreGuiInset = true
 gui.DisplayOrder = 10
 gui.Parent = playerGui
 
--- Main window
 local window = Instance.new("Frame")
 window.Name = "Window"
 window.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -55,19 +50,15 @@ outline.Color = COLORS.Border
 outline.Thickness = 1.5
 outline.Parent = window
 
--- Header
 local header = Instance.new("Frame")
 header.Name = "Header"
-
--- Reduced from 82 to 70 to move the divider higher
-header.Size = UDim2.new(1, 0, 0, 70)
+header.Size = UDim2.new(1, 0, 0, 66)
 header.BackgroundColor3 = COLORS.Header
 header.BorderSizePixel = 0
 header.Active = true
 header.ZIndex = 2
 header.Parent = window
 
--- Title
 local title = Instance.new("TextLabel")
 title.Name = "Title"
 title.Position = UDim2.fromOffset(22, -8)
@@ -81,7 +72,6 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.ZIndex = 3
 title.Parent = header
 
--- Tabs container
 local tabs = Instance.new("ScrollingFrame")
 tabs.Name = "Categories"
 tabs.Position = UDim2.new(0, 260, 0, 0)
@@ -110,7 +100,6 @@ tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 5)
 tabLayout.Parent = tabs
 
--- Divider line
 local divider = Instance.new("Frame")
 divider.Name = "HeaderDivider"
 divider.Position = UDim2.new(0, 0, 1, -1)
@@ -120,16 +109,14 @@ divider.BorderSizePixel = 0
 divider.ZIndex = 4
 divider.Parent = header
 
--- Empty content area
 local content = Instance.new("Frame")
 content.Name = "Content"
-content.Position = UDim2.new(0, 0, 0, 70)
-content.Size = UDim2.new(1, 0, 1, -70)
+content.Position = UDim2.new(0, 0, 0, 66)
+content.Size = UDim2.new(1, 0, 1, -66)
 content.BackgroundColor3 = COLORS.Content
 content.BorderSizePixel = 0
 content.Parent = window
 
--- Tab names
 local categoryNames = {
 	"Main",
 	"World",
@@ -154,7 +141,6 @@ local tabButtons = {}
 local pageFrames = {}
 local selectedTab = "Main"
 
--- Create empty pages
 for _, name in ipairs(categoryNames) do
 	local page = Instance.new("Frame")
 	page.Name = name .. "Page"
@@ -168,16 +154,12 @@ for _, name in ipairs(categoryNames) do
 	pageFrames[name] = page
 end
 
--- Tab selection
 local function selectTab(name)
 	selectedTab = name
 
 	for tabName, parts in pairs(tabButtons) do
 		local active = tabName == selectedTab
-
-		parts.Label.TextColor3 =
-			active and COLORS.White or COLORS.Inactive
-
+		parts.Label.TextColor3 = active and COLORS.White or COLORS.Inactive
 		parts.Underline.Visible = active
 	end
 
@@ -186,7 +168,6 @@ local function selectTab(name)
 	end
 end
 
--- Create tabs
 for index, name in ipairs(categoryNames) do
 	local button = Instance.new("TextButton")
 	button.Name = name .. "Tab"
@@ -235,7 +216,6 @@ end
 
 selectTab(selectedTab)
 
--- Drag the window using the header
 local dragging = false
 local dragStart
 local startPosition
@@ -245,14 +225,11 @@ header.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1
 		or input.UserInputType == Enum.UserInputType.Touch then
 
-		-- Do not drag when interacting with the tabs
 		local overTabs =
 			input.Position.X >= tabs.AbsolutePosition.X
-			and input.Position.X <=
-				tabs.AbsolutePosition.X + tabs.AbsoluteSize.X
+			and input.Position.X <= tabs.AbsolutePosition.X + tabs.AbsoluteSize.X
 			and input.Position.Y >= tabs.AbsolutePosition.Y
-			and input.Position.Y <=
-				tabs.AbsolutePosition.Y + tabs.AbsoluteSize.Y
+			and input.Position.Y <= tabs.AbsolutePosition.Y + tabs.AbsoluteSize.Y
 
 		if overTabs then
 			return
@@ -290,7 +267,6 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
--- Right Shift to hide/show
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
 		return
@@ -301,21 +277,22 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 end)
 
--- Mobile toggle
 local mobileToggle = Instance.new("TextButton")
 mobileToggle.Name = "MobileToggle"
 mobileToggle.Position = UDim2.fromOffset(12, 70)
-mobileToggle.Size = UDim2.fromOffset(38, 38)
+mobileToggle.Size = UDim2.fromOffset(76, 38)
 mobileToggle.BackgroundColor3 = COLORS.Header
-mobileToggle.Text = "G"
+mobileToggle.Text = "Toggle"
 mobileToggle.TextColor3 = COLORS.White
-mobileToggle.TextSize = 17
-mobileToggle.Font = Enum.Font.GothamBold
+mobileToggle.TextSize = 14
+mobileToggle.Font = Enum.Font.GothamMedium
 mobileToggle.Visible = UserInputService.TouchEnabled
 mobileToggle.AutoButtonColor = true
 mobileToggle.Parent = gui
 
-Instance.new("UICorner", mobileToggle).CornerRadius = UDim.new(0, 8)
+local mobileCorner = Instance.new("UICorner")
+mobileCorner.CornerRadius = UDim.new(0, 8)
+mobileCorner.Parent = mobileToggle
 
 local toggleBorder = Instance.new("UIStroke")
 toggleBorder.Color = COLORS.Border
