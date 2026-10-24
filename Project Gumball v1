@@ -1,454 +1,254 @@
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- GUMBALL WORLD TAB
+-- Insert after the first selectTab(selectedTab) following the tab creation loop.
+
 local Lighting = game:GetService("Lighting")
-local SoundService = game:GetService("SoundService")
 local RunService = game:GetService("RunService")
+local worldPage = pageFrames.World
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local unlockRemote = ReplicatedStorage:WaitForChild("GumballUnlockCosmetics", 10)
+local worldPanel = Color3.fromRGB(14, 16, 20)
+local worldBorder = COLORS.Border
+local worldPages = {}
+local worldButtons = {}
 
-local previous = playerGui:FindFirstChild("GumballUI")
-if previous then previous:Destroy() end
+local nav = Instance.new("Frame")
+nav.Name = "WorldSubTabs"
+nav.Position = UDim2.fromOffset(16, 12)
+nav.Size = UDim2.new(1, -32, 0, 38)
+nav.BackgroundColor3 = worldPanel
+nav.BorderSizePixel = 0
+nav.Parent = worldPage
+Instance.new("UICorner", nav).CornerRadius = UDim.new(0, 8)
 
-local COLORS = {
-    Background = Color3.fromRGB(9, 11, 14),
-    Header = Color3.fromRGB(10, 12, 15),
-    Content = Color3.fromRGB(9, 11, 14),
-    Border = Color3.fromRGB(43, 46, 52),
-    Divider = Color3.fromRGB(36, 39, 44),
-    White = Color3.fromRGB(245, 245, 247),
-    Inactive = Color3.fromRGB(174, 177, 184),
-    Muted = Color3.fromRGB(115, 120, 130),
-    Selected = Color3.fromRGB(30, 34, 40),
-    Green = Color3.fromRGB(104, 210, 140),
-    Amber = Color3.fromRGB(255, 190, 90),
-}
+local navLayout = Instance.new("UIListLayout")
+navLayout.FillDirection = Enum.FillDirection.Horizontal
+navLayout.Padding = UDim.new(0, 6)
+navLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+navLayout.Parent = nav
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "GumballUI"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.DisplayOrder = 10
-gui.Parent = playerGui
+local navPadding = Instance.new("UIPadding")
+navPadding.PaddingLeft = UDim.new(0, 6)
+navPadding.Parent = nav
 
-local window = Instance.new("Frame")
-window.Name = "Window"
-window.AnchorPoint = Vector2.new(0.5, 0.5)
-window.Position = UDim2.fromScale(0.5, 0.5)
-window.Size = UDim2.new(0.89, 0, 0.76, 0)
-window.BackgroundColor3 = COLORS.Background
-window.BorderSizePixel = 0
-window.ClipsDescendants = true
-window.Parent = gui
-
-local sizeConstraint = Instance.new("UISizeConstraint")
-sizeConstraint.MinSize = Vector2.new(340, 300)
-sizeConstraint.MaxSize = Vector2.new(1140, 780)
-sizeConstraint.Parent = window
-
-Instance.new("UICorner", window).CornerRadius = UDim.new(0, 12)
-
-local outline = Instance.new("UIStroke")
-outline.Color = COLORS.Border
-outline.Thickness = 1.5
-outline.Parent = window
-
-local header = Instance.new("Frame")
-header.Name = "Header"
-header.Size = UDim2.new(1, 0, 0, 82)
-header.BackgroundColor3 = COLORS.Header
-header.BorderSizePixel = 0
-header.Active = true
-header.ZIndex = 2
-header.Parent = window
-
-local title = Instance.new("TextLabel")
-title.Name = "Title"
-title.Position = UDim2.fromOffset(22, -8)
-title.Size = UDim2.new(0, 220, 1, 0)
-title.BackgroundTransparency = 1
-title.Text = "GUMBALL"
-title.TextColor3 = COLORS.White
-title.TextSize = 27
-title.Font = Enum.Font.GothamBold
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.ZIndex = 3
-title.Parent = header
-
-local tabs = Instance.new("ScrollingFrame")
-tabs.Name = "Categories"
-tabs.Position = UDim2.new(0, 260, 0, 0)
-tabs.Size = UDim2.new(1, -272, 1, 0)
-tabs.BackgroundTransparency = 1
-tabs.BorderSizePixel = 0
-tabs.ScrollBarThickness = 0
-tabs.ScrollingDirection = Enum.ScrollingDirection.X
-tabs.AutomaticCanvasSize = Enum.AutomaticSize.X
-tabs.CanvasSize = UDim2.new()
-tabs.Active = true
-tabs.ZIndex = 3
-tabs.Parent = header
-
-local tabPadding = Instance.new("UIPadding")
-tabPadding.PaddingLeft = UDim.new(0, 4)
-tabPadding.PaddingRight = UDim.new(0, 8)
-tabPadding.Parent = tabs
-
-local tabLayout = Instance.new("UIListLayout")
-tabLayout.FillDirection = Enum.FillDirection.Horizontal
-tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabLayout.Padding = UDim.new(0, 5)
-tabLayout.Parent = tabs
-
-local divider = Instance.new("Frame")
-divider.Position = UDim2.new(0, 0, 1, -1)
-divider.Size = UDim2.new(1, 0, 0, 1)
-divider.BackgroundColor3 = COLORS.Divider
-divider.BorderSizePixel = 0
-divider.ZIndex = 4
-divider.Parent = header
-
-local content = Instance.new("Frame")
-content.Name = "Content"
-content.Position = UDim2.new(0, 0, 0, 82)
-content.Size = UDim2.new(1, 0, 1, -82)
-content.BackgroundColor3 = COLORS.Content
-content.BorderSizePixel = 0
-content.Parent = window
-
-local categoryNames = {
-    "Main", "World", "ESP", "Visuals",
-    "Character", "Misc", "Settings"
-}
-
-local tabWidths = {
-    Main = 88, World = 88, ESP = 78,
-    Visuals = 96, Character = 116,
-    Misc = 78, Settings = 104,
-}
-
-local tabButtons = {}
-local pageFrames = {}
-local selectedTab = "Main"
-
-local function makeLabel(parent, name, text, position, size,
-    textSize, color, font)
-    local label = Instance.new("TextLabel")
-    label.Name = name
-    label.Position = position
-    label.Size = size
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = color or COLORS.White
-    label.TextSize = textSize or 14
-    label.Font = font or Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextYAlignment = Enum.TextYAlignment.Center
-    label.Parent = parent
-    return label
-end
-
-for _, name in ipairs(categoryNames) do
-    local page = Instance.new("Frame")
-    page.Name = name .. "Page"
-    page.Size = UDim2.fromScale(1, 1)
+for _, name in ipairs({"Lighting", "Post Processing", "Sky & Weather"}) do
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name:gsub("%W", "") .. "Page"
+    page.Position = UDim2.fromOffset(16, 60)
+    page.Size = UDim2.new(1, -32, 1, -72)
     page.BackgroundTransparency = 1
-    page.Visible = name == selectedTab
-    page.Parent = content
-    pageFrames[name] = page
-end
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = COLORS.Muted
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.CanvasSize = UDim2.new()
+    page.ScrollingDirection = Enum.ScrollingDirection.Y
+    page.Visible = name == "Lighting"
+    page.Parent = worldPage
 
-local function selectTab(name)
-    selectedTab = name
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 3)
+    padding.PaddingBottom = UDim.new(0, 12)
+    padding.PaddingRight = UDim.new(0, 6)
+    padding.Parent = page
 
-    for tabName, parts in pairs(tabButtons) do
-        local active = tabName == name
-        parts.Label.TextColor3 =
-            active and COLORS.White or COLORS.Inactive
-        parts.Underline.Visible = active
-    end
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = page
 
-    for pageName, page in pairs(pageFrames) do
-        page.Visible = pageName == name
-    end
-end
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
+    end)
 
-for index, name in ipairs(categoryNames) do
+    worldPages[name] = page
+
     local button = Instance.new("TextButton")
-    button.Name = name .. "Tab"
-    button.LayoutOrder = index
-    button.Size = UDim2.new(0, tabWidths[name], 1, 0)
-    button.BackgroundTransparency = 1
+    button.Name = name .. "Button"
+    button.Size = UDim2.fromOffset(
+        name == "Lighting" and 112 or
+        name == "Post Processing" and 150 or 145,
+        28
+    )
+    button.BackgroundColor3 = name == "Lighting" and COLORS.Selected or worldPanel
     button.BorderSizePixel = 0
-    button.Text = ""
+    button.Text = name
+    button.TextColor3 = name == "Lighting" and COLORS.White or COLORS.Inactive
+    button.TextSize = 12
+    button.Font = Enum.Font.GothamMedium
     button.AutoButtonColor = false
-    button.ZIndex = 4
-    button.Parent = tabs
+    button.Parent = nav
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Size = UDim2.new(1, 0, 1, -12)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = COLORS.Inactive
-    label.TextSize = 15
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Center
-    label.ZIndex = 5
-    label.Parent = button
+    worldButtons[name] = button
+end
 
-    local underline = Instance.new("Frame")
-    underline.Name = "Underline"
-    underline.AnchorPoint = Vector2.new(0.5, 1)
-    underline.Position = UDim2.new(0.5, 0, 1, -8)
-    underline.Size = UDim2.new(1, -8, 0, 3)
-    underline.BackgroundColor3 = COLORS.White
-    underline.BorderSizePixel = 0
-    underline.Visible = false
-    underline.ZIndex = 6
-    underline.Parent = button
+local function selectWorldTab(name)
+    for tabName, page in pairs(worldPages) do
+        local active = tabName == name
+        page.Visible = active
+        worldButtons[tabName].BackgroundColor3 =
+            active and COLORS.Selected or worldPanel
+        worldButtons[tabName].TextColor3 =
+            active and COLORS.White or COLORS.Inactive
+    end
+end
 
-    tabButtons[name] = {
-        Button = button,
-        Label = label,
-        Underline = underline,
-    }
-
+for name, button in pairs(worldButtons) do
     button.Activated:Connect(function()
-        selectTab(name)
+        selectWorldTab(name)
     end)
 end
 
-selectTab(selectedTab)
+local function worldHeader(parent, heading, subtitle)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -4, 0, subtitle and 52 or 30)
+    frame.BackgroundTransparency = 1
+    frame.Parent = parent
 
-tabs.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseWheel then
-        local maxScroll = math.max(
-            0,
-            tabs.AbsoluteCanvasSize.X - tabs.AbsoluteSize.X
-        )
-        tabs.CanvasPosition = Vector2.new(
-            math.clamp(
-                tabs.CanvasPosition.X - input.Position.Z * 55,
-                0, maxScroll
-            ), 0
+    makeLabel(
+        frame, "Heading", string.upper(heading),
+        UDim2.fromOffset(2, 0),
+        UDim2.new(1, -4, 0, 24),
+        14, COLORS.White, Enum.Font.GothamBold
+    )
+
+    if subtitle then
+        makeLabel(
+            frame, "Subtitle", subtitle,
+            UDim2.fromOffset(2, 24),
+            UDim2.new(1, -4, 0, 22),
+            11, COLORS.Muted
         )
     end
-end)
 
-----------------------------------------------------------------
--- WORLD TAB
-----------------------------------------------------------------
-
-local worldPage = pageFrames.World
-
-local worldScroll = Instance.new("ScrollingFrame")
-worldScroll.Name = "WorldSettings"
-worldScroll.Position = UDim2.fromOffset(12, 12)
-worldScroll.Size = UDim2.new(1, -24, 1, -24)
-worldScroll.BackgroundTransparency = 1
-worldScroll.BorderSizePixel = 0
-worldScroll.ScrollBarThickness = 4
-worldScroll.ScrollBarImageColor3 = COLORS.Border
-worldScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-worldScroll.CanvasSize = UDim2.new()
-worldScroll.ScrollingDirection = Enum.ScrollingDirection.Y
-worldScroll.Parent = worldPage
-
-local worldPadding = Instance.new("UIPadding")
-worldPadding.PaddingLeft = UDim.new(0, 8)
-worldPadding.PaddingRight = UDim.new(0, 8)
-worldPadding.PaddingTop = UDim.new(0, 4)
-worldPadding.PaddingBottom = UDim.new(0, 12)
-worldPadding.Parent = worldScroll
-
-local worldLayout = Instance.new("UIListLayout")
-worldLayout.Padding = UDim.new(0, 8)
-worldLayout.SortOrder = Enum.SortOrder.LayoutOrder
-worldLayout.Parent = worldScroll
-
-local function worldSection(text)
-    local section = Instance.new("Frame")
-    section.Name = text:gsub("%W", "") .. "Section"
-    section.Size = UDim2.new(1, 0, 0, 34)
-    section.BackgroundColor3 = COLORS.Header
-    section.BorderSizePixel = 0
-    section.Parent = worldScroll
-    Instance.new("UICorner", section).CornerRadius = UDim.new(0, 6)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = COLORS.Border
-    stroke.Thickness = 1
-    stroke.Parent = section
-
-    makeLabel(section, "Title", text,
-        UDim2.fromOffset(12, 0),
-        UDim2.new(1, -24, 1, 0), 13,
-        COLORS.White, Enum.Font.GothamBold)
-
-    local body = Instance.new("Frame")
-    body.Name = "Controls"
-    body.Size = UDim2.new(1, 0, 0, 0)
-    body.AutomaticSize = Enum.AutomaticSize.Y
-    body.BackgroundTransparency = 1
-    body.Parent = worldScroll
-
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 6)
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Parent = body
-
-    return body
+    return frame
 end
 
-local function controlRow(parent, height)
+local function worldRow(parent, name, description, height)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, height or 36)
-    row.BackgroundColor3 = COLORS.Background
+    row.Name = name:gsub("%W", "") .. "Row"
+    row.Size = UDim2.new(1, -4, 0, height or 56)
+    row.BackgroundColor3 = worldPanel
     row.BorderSizePixel = 0
     row.Parent = parent
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = COLORS.Border
+    stroke.Color = worldBorder
     stroke.Thickness = 1
     stroke.Parent = row
+
+    makeLabel(
+        row, "Label", name,
+        UDim2.fromOffset(12, 5),
+        UDim2.new(1, -155, 0, 20),
+        12, COLORS.White, Enum.Font.GothamMedium
+    )
+
+    if description then
+        makeLabel(
+            row, "Description", description,
+            UDim2.fromOffset(12, 26),
+            UDim2.new(1, -155, 0, 18),
+            10, COLORS.Muted
+        )
+    end
+
     return row
 end
 
-local function worldButton(parent, text, callback)
-    local row = controlRow(parent, 36)
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -12, 1, -8)
-    button.Position = UDim2.fromOffset(6, 4)
-    button.BackgroundColor3 = COLORS.Selected
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = COLORS.White
-    button.TextSize = 12
-    button.Font = Enum.Font.Gotham
-    button.Parent = row
-    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
-
-    button.Activated:Connect(callback)
-    return button
-end
-
-local function worldToggle(parent, text, initial, callback)
-    local row = controlRow(parent, 36)
-
-    makeLabel(row, "Label", text,
-        UDim2.fromOffset(10, 0),
-        UDim2.new(1, -100, 1, 0), 12, COLORS.Inactive)
+local function worldToggle(parent, name, description, initial, callback)
+    local row = worldRow(parent, name, description)
+    local value = initial == true
 
     local button = Instance.new("TextButton")
     button.AnchorPoint = Vector2.new(1, 0.5)
-    button.Position = UDim2.new(1, -8, 0.5, 0)
-    button.Size = UDim2.fromOffset(76, 25)
+    button.Position = UDim2.new(1, -10, 0.5, 0)
+    button.Size = UDim2.fromOffset(62, 28)
+    button.BackgroundColor3 = value and COLORS.Green or COLORS.Selected
     button.BorderSizePixel = 0
+    button.Text = value and "ON" or "OFF"
+    button.TextColor3 = value and COLORS.Background or COLORS.Inactive
     button.TextSize = 11
     button.Font = Enum.Font.GothamBold
     button.Parent = row
-    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
-
-    local enabled = initial == true
-
-    local function update()
-        button.Text = enabled and "ON" or "OFF"
-        button.BackgroundColor3 =
-            enabled and COLORS.Green or COLORS.Selected
-        button.TextColor3 =
-            enabled and COLORS.Background or COLORS.Inactive
-    end
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
 
     button.Activated:Connect(function()
-        enabled = not enabled
-        update()
-        callback(enabled)
+        value = not value
+        button.Text = value and "ON" or "OFF"
+        button.BackgroundColor3 = value and COLORS.Green or COLORS.Selected
+        button.TextColor3 = value and COLORS.Background or COLORS.Inactive
+        callback(value)
     end)
 
-    update()
-    callback(enabled)
-
-    return {
-        Get = function() return enabled end,
-        Set = function(value)
-            enabled = value
-            update()
-            callback(enabled)
-        end
-    }
+    return button
 end
 
-local function worldSlider(parent, text, min, max, initial, callback)
-    local row = controlRow(parent, 54)
+local function worldSlider(parent, name, description, minValue, maxValue, initial, decimals, callback)
+    local row = worldRow(parent, name, description, 66)
+    local value = math.clamp(initial, minValue, maxValue)
 
-    makeLabel(row, "Label", text,
-        UDim2.fromOffset(10, 3),
-        UDim2.new(1, -90, 0, 20), 12, COLORS.Inactive)
+    local valueLabel = makeLabel(
+        row, "Value", tostring(value),
+        UDim2.new(1, -110, 0, 5),
+        UDim2.fromOffset(96, 20),
+        11, COLORS.White, Enum.Font.GothamMedium
+    )
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
 
-    local valueLabel = makeLabel(row, "Value", "",
-        UDim2.new(1, -78, 0, 3),
-        UDim2.fromOffset(66, 20), 12, COLORS.White)
-
-    local track = Instance.new("TextButton")
-    track.Name = "SliderTrack"
-    track.Position = UDim2.new(0, 10, 0, 31)
-    track.Size = UDim2.new(1, -20, 0, 10)
-    track.BackgroundColor3 = COLORS.Selected
+    local track = Instance.new("Frame")
+    track.Position = UDim2.new(0, 12, 1, -15)
+    track.Size = UDim2.new(1, -24, 0, 4)
+    track.BackgroundColor3 = Color3.fromRGB(37, 40, 46)
     track.BorderSizePixel = 0
-    track.Text = ""
-    track.AutoButtonColor = false
     track.Parent = row
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
     local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(0, 0, 1, 0)
-    fill.BackgroundColor3 = COLORS.Green
+    fill.BackgroundColor3 = COLORS.White
     fill.BorderSizePixel = 0
     fill.Parent = track
     Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
-    local value = math.clamp(initial, min, max)
+    local knob = Instance.new("Frame")
+    knob.AnchorPoint = Vector2.new(0.5, 0.5)
+    knob.Size = UDim2.fromOffset(10, 10)
+    knob.BackgroundColor3 = COLORS.White
+    knob.BorderSizePixel = 0
+    knob.Parent = track
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
     local dragging = false
 
-    local function setValue(nextValue)
-        value = math.clamp(nextValue, min, max)
-        local alpha = (value - min) / (max - min)
-        fill.Size = UDim2.new(alpha, 0, 1, 0)
-        valueLabel.Text = string.format("%.2f", value)
+    local function update(x)
+        local alpha = math.clamp(
+            (x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1),
+            0, 1
+        )
+
+        local multiplier = 10 ^ (decimals or 0)
+        value = minValue + (maxValue - minValue) * alpha
+        value = math.floor(value * multiplier + 0.5) / multiplier
+
+        local progress = (value - minValue) / (maxValue - minValue)
+        fill.Size = UDim2.new(progress, 0, 1, 0)
+        knob.Position = UDim2.new(progress, 0, 0.5, 0)
+        valueLabel.Text = tostring(value)
         callback(value)
     end
 
-    local function setFromX(x)
-        local width = math.max(track.AbsoluteSize.X, 1)
-        local alpha = math.clamp(
-            (x - track.AbsolutePosition.X) / width, 0, 1
-        )
-        setValue(min + alpha * (max - min))
+    local function renderInitial()
+        local progress = (value - minValue) / (maxValue - minValue)
+        fill.Size = UDim2.new(progress, 0, 1, 0)
+        knob.Position = UDim2.new(progress, 0, 0.5, 0)
     end
-
-    track.Activated:Connect(function()
-        setFromX(UserInputService:GetMouseLocation().X)
-    end)
+    renderInitial()
 
     track.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
+        or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            setFromX(input.Position.X)
-        end
-    end)
-
-    track.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+            update(input.Position.X)
         end
     end)
 
@@ -457,846 +257,645 @@ local function worldSlider(parent, text, min, max, initial, callback)
             input.UserInputType == Enum.UserInputType.MouseMovement
             or input.UserInputType == Enum.UserInputType.Touch
         ) then
-            setFromX(input.Position.X)
+            update(input.Position.X)
         end
     end)
 
-    setValue(value)
-    return { Get = function() return value end, Set = setValue }
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
 end
 
-local function getOrCreateEffect(className, name)
-    local effect = Lighting:FindFirstChild(name)
-    if effect and effect.ClassName ~= className then
-        effect:Destroy()
-        effect = nil
-    end
+local function worldTextBox(parent, name, description, placeholder, callback)
+    local row = worldRow(parent, name, description, 62)
 
-    if not effect then
+    local box = Instance.new("TextBox")
+    box.AnchorPoint = Vector2.new(1, 0.5)
+    box.Position = UDim2.new(1, -10, 0.5, 0)
+    box.Size = UDim2.new(0.52, 0, 0, 30)
+    box.BackgroundColor3 = COLORS.Background
+    box.BorderSizePixel = 0
+    box.Text = ""
+    box.PlaceholderText = placeholder or "rbxassetid://..."
+    box.PlaceholderColor3 = COLORS.Muted
+    box.TextColor3 = COLORS.White
+    box.TextSize = 11
+    box.Font = Enum.Font.Gotham
+    box.ClearTextOnFocus = false
+    box.Parent = row
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = worldBorder
+    stroke.Parent = box
+
+    box.FocusLost:Connect(function()
+        callback(box.Text)
+    end)
+
+    return box
+end
+
+local function worldButton(parent, name, description, buttonText, callback)
+    local row = worldRow(parent, name, description)
+    local button = Instance.new("TextButton")
+    button.AnchorPoint = Vector2.new(1, 0.5)
+    button.Position = UDim2.new(1, -10, 0.5, 0)
+    button.Size = UDim2.fromOffset(126, 30)
+    button.BackgroundColor3 = COLORS.Selected
+    button.BorderSizePixel = 0
+    button.Text = buttonText
+    button.TextColor3 = COLORS.White
+    button.TextSize = 11
+    button.Font = Enum.Font.GothamMedium
+    button.Parent = row
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+
+    button.Activated:Connect(callback)
+    return button
+end
+
+-- Save original Lighting properties for Reset World.
+local originalLighting = {}
+for _, property in ipairs({
+    "ClockTime", "GeographicLatitude", "Brightness",
+    "ExposureCompensation", "GlobalShadows", "ShadowSoftness",
+    "Ambient", "OutdoorAmbient", "ColorShift_Top", "ColorShift_Bottom",
+    "EnvironmentDiffuseScale", "EnvironmentSpecularScale",
+    "FogColor", "FogStart", "FogEnd"
+}) do
+    originalLighting[property] = Lighting[property]
+end
+
+local originalSky
+for _, child in ipairs(Lighting:GetChildren()) do
+    if child:IsA("Sky") then
+        originalSky = child:Clone()
+        break
+    end
+end
+
+local function getWorldEffect(className, name)
+    local effectName = "GumballWorld_" .. name
+    local effect = Lighting:FindFirstChild(effectName)
+
+    if not effect or effect.ClassName ~= className then
+        if effect then effect:Destroy() end
         effect = Instance.new(className)
-        effect.Name = name
+        effect.Name = effectName
         effect.Parent = Lighting
     end
 
     return effect
 end
 
-local originalLighting = {
-    ClockTime = Lighting.ClockTime,
-    Brightness = Lighting.Brightness,
-    ExposureCompensation = Lighting.ExposureCompensation,
-    GeographicLatitude = Lighting.GeographicLatitude,
-    GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient,
-    EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
-    EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
-    FogColor = Lighting.FogColor,
-    FogStart = Lighting.FogStart,
-    FogEnd = Lighting.FogEnd,
-}
+-- LIGHTING
+local lightPage = worldPages.Lighting
 
-local originalSky = Lighting:FindFirstChildOfClass("Sky")
-local originalSkyClone = originalSky and originalSky:Clone() or nil
+worldHeader(
+    lightPage,
+    "Lighting",
+    "Customize the time, brightness, shadows, fog and atmosphere."
+)
 
-local bloom = getOrCreateEffect("BloomEffect", "GumballBloom")
-local colorCorrection =
-    getOrCreateEffect("ColorCorrectionEffect", "GumballColorCorrection")
-local depthOfField =
-    getOrCreateEffect("DepthOfFieldEffect", "GumballDepthOfField")
-local sunRays = getOrCreateEffect("SunRaysEffect", "GumballSunRays")
-local atmosphere = getOrCreateEffect("Atmosphere", "GumballAtmosphere")
-local blur = getOrCreateEffect("BlurEffect", "GumballBlur")
+worldSlider(lightPage, "Clock time", "0 = midnight, 12 = noon", 0, 24, Lighting.ClockTime, 1,
+    function(v) Lighting.ClockTime = v end)
 
-bloom.Enabled = false
-colorCorrection.Enabled = false
-depthOfField.Enabled = false
-sunRays.Enabled = false
-atmosphere.Density = 0
-blur.Enabled = false
+worldSlider(lightPage, "Brightness", "Overall scene brightness", 0, 10, Lighting.Brightness, 1,
+    function(v) Lighting.Brightness = v end)
 
-local lightingSection = worldSection("LIGHTING OVERRIDE")
+worldSlider(lightPage, "Exposure", "Exposure compensation", -3, 3, Lighting.ExposureCompensation, 2,
+    function(v) Lighting.ExposureCompensation = v end)
 
-worldToggle(lightingSection, "Enable Lighting Override", false, function(enabled)
-    if not enabled then return end
-    Lighting.ClockTime = 14
-    Lighting.Brightness = 2
-    Lighting.ExposureCompensation = 0
-    Lighting.GlobalShadows = true
-end)
+worldSlider(lightPage, "Geographic latitude", "Sun and moon positioning", -180, 180, Lighting.GeographicLatitude, 1,
+    function(v) Lighting.GeographicLatitude = v end)
 
-worldButton(lightingSection, "Apply Day Preset", function()
-    Lighting.ClockTime = 14
-    Lighting.Brightness = 2
-    Lighting.ExposureCompensation = 0
-    Lighting.Ambient = Color3.fromRGB(127, 127, 127)
-    Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 150)
-    Lighting.GlobalShadows = true
-end)
+worldSlider(lightPage, "Shadow softness", "Softness of shadows", 0, 1, Lighting.ShadowSoftness, 2,
+    function(v) Lighting.ShadowSoftness = v end)
 
-worldButton(lightingSection, "Apply Night Preset", function()
-    Lighting.ClockTime = 0
-    Lighting.Brightness = 1
-    Lighting.ExposureCompensation = -0.2
-    Lighting.Ambient = Color3.fromRGB(35, 40, 65)
-    Lighting.OutdoorAmbient = Color3.fromRGB(20, 25, 45)
-    Lighting.GlobalShadows = true
-end)
+worldToggle(lightPage, "Global shadows", "Enable or disable global shadows", Lighting.GlobalShadows,
+    function(v) Lighting.GlobalShadows = v end)
 
-local timeSection = worldSection("TIME & EXPOSURE")
+worldSlider(lightPage, "Environment diffuse", "Reflected environment lighting", 0, 1, Lighting.EnvironmentDiffuseScale, 2,
+    function(v) Lighting.EnvironmentDiffuseScale = v end)
 
-worldSlider(timeSection, "Clock Time", 0, 24, Lighting.ClockTime, function(v)
-    Lighting.ClockTime = v
-end)
+worldSlider(lightPage, "Environment specular", "Shiny environment reflections", 0, 1, Lighting.EnvironmentSpecularScale, 2,
+    function(v) Lighting.EnvironmentSpecularScale = v end)
 
-worldSlider(timeSection, "Brightness", 0, 10, Lighting.Brightness, function(v)
-    Lighting.Brightness = v
-end)
-
-worldSlider(timeSection, "Exposure Compensation", -5, 5,
-    Lighting.ExposureCompensation, function(v)
-        Lighting.ExposureCompensation = v
-    end)
-
-worldSlider(timeSection, "Geographic Latitude", -90, 90,
-    Lighting.GeographicLatitude, function(v)
-        Lighting.GeographicLatitude = v
-    end)
-
-local qualitySection = worldSection("SHADOWS & QUALITY")
-
-worldToggle(qualitySection, "Global Shadows", Lighting.GlobalShadows, function(v)
-    Lighting.GlobalShadows = v
-end)
-
-worldSlider(qualitySection, "Environment Diffuse Scale", 0, 1,
-    Lighting.EnvironmentDiffuseScale, function(v)
-        Lighting.EnvironmentDiffuseScale = v
-    end)
-
-worldSlider(qualitySection, "Environment Specular Scale", 0, 1,
-    Lighting.EnvironmentSpecularScale, function(v)
-        Lighting.EnvironmentSpecularScale = v
-    end)
-
-local ambientSection = worldSection("AMBIENT COLORS")
-
-worldButton(ambientSection, "Neutral Ambient", function()
-    Lighting.Ambient = Color3.fromRGB(127, 127, 127)
-    Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 150)
-end)
-
-worldButton(ambientSection, "Blue Ambient", function()
-    Lighting.Ambient = Color3.fromRGB(65, 80, 140)
-    Lighting.OutdoorAmbient = Color3.fromRGB(90, 115, 180)
-end)
-
-worldButton(ambientSection, "Warm Ambient", function()
-    Lighting.Ambient = Color3.fromRGB(160, 105, 70)
-    Lighting.OutdoorAmbient = Color3.fromRGB(200, 145, 95)
-end)
-
-worldButton(ambientSection, "Dark Ambient", function()
-    Lighting.Ambient = Color3.fromRGB(20, 20, 25)
-    Lighting.OutdoorAmbient = Color3.fromRGB(30, 30, 35)
-end)
-
-local fogSection = worldSection("FOG & ATMOSPHERE")
-
-worldToggle(fogSection, "Fog Enabled", false, function(enabled)
-    if enabled then
+worldToggle(lightPage, "Fog", "Toggle fog in your local view", false, function(on)
+    if on then
         Lighting.FogStart = 0
-        Lighting.FogEnd = 500
-        Lighting.FogColor = Color3.fromRGB(190, 200, 215)
+        Lighting.FogEnd = 300
     else
-        Lighting.FogStart = 0
-        Lighting.FogEnd = 100000
+        Lighting.FogStart = originalLighting.FogStart
+        Lighting.FogEnd = originalLighting.FogEnd
     end
 end)
 
-worldSlider(fogSection, "Fog Start", 0, 10000, Lighting.FogStart, function(v)
-    Lighting.FogStart = v
+worldSlider(lightPage, "Fog start", "Distance where fog begins", 0, 1000,
+    math.clamp(Lighting.FogStart, 0, 1000), 0,
+    function(v) Lighting.FogStart = v end)
+
+worldSlider(lightPage, "Fog end", "Distance where fog becomes dense", 50, 10000,
+    math.clamp(Lighting.FogEnd, 50, 10000), 0,
+    function(v) Lighting.FogEnd = v end)
+
+worldToggle(lightPage, "Atmosphere", "Toggle atmospheric haze", false, function(on)
+    getWorldEffect("Atmosphere", "Atmosphere").Enabled = on
 end)
 
-worldSlider(fogSection, "Fog End", 0, 10000, Lighting.FogEnd, function(v)
-    Lighting.FogEnd = math.max(v, Lighting.FogStart + 1)
-end)
+worldSlider(lightPage, "Atmosphere density", "Thickness of atmospheric haze", 0, 1, 0.395, 2,
+    function(v) getWorldEffect("Atmosphere", "Atmosphere").Density = v end)
 
-worldSlider(fogSection, "Atmosphere Density", 0, 1, atmosphere.Density, function(v)
-    atmosphere.Density = v
-end)
+worldSlider(lightPage, "Atmosphere offset", "Atmosphere vertical offset", -1, 1, 0, 2,
+    function(v) getWorldEffect("Atmosphere", "Atmosphere").Offset = v end)
 
-worldSlider(fogSection, "Atmosphere Haze", 0, 10, atmosphere.Haze, function(v)
-    atmosphere.Haze = v
-end)
+worldSlider(lightPage, "Atmosphere glare", "Glow around the sun", 0, 10, 0, 2,
+    function(v) getWorldEffect("Atmosphere", "Atmosphere").Glare = v end)
 
-worldSlider(fogSection, "Atmosphere Glare", 0, 10, atmosphere.Glare, function(v)
-    atmosphere.Glare = v
-end)
+worldSlider(lightPage, "Atmosphere haze", "Distant haze strength", 0, 10, 0, 2,
+    function(v) getWorldEffect("Atmosphere", "Atmosphere").Haze = v end)
 
-worldButton(fogSection, "Reset Fog & Atmosphere", function()
-    Lighting.FogStart = originalLighting.FogStart
-    Lighting.FogEnd = originalLighting.FogEnd
-    Lighting.FogColor = originalLighting.FogColor
-    atmosphere.Density = 0
-    atmosphere.Haze = 0
-    atmosphere.Glare = 0
-end)
+-- POST PROCESSING
+local postPage = worldPages["Post Processing"]
 
-----------------------------------------------------------------
--- SKYBOX
-----------------------------------------------------------------
+worldHeader(
+    postPage,
+    "Post Processing",
+    "Separate controls for bloom, color correction, focus and sun rays."
+)
 
-local skySection = worldSection("SKYBOX")
+worldToggle(postPage, "Bloom", "Glow around bright objects", false,
+    function(on) getWorldEffect("BloomEffect", "Bloom").Enabled = on end)
 
-local function getSky()
-    local sky = Lighting:FindFirstChild("GumballCustomSky")
-    if not sky then
-        sky = Instance.new("Sky")
-        sky.Name = "GumballCustomSky"
-        sky.Parent = Lighting
-    end
-    return sky
-end
+worldSlider(postPage, "Bloom intensity", "Strength of bloom", 0, 3, 0.4, 2,
+    function(v) getWorldEffect("BloomEffect", "Bloom").Intensity = v end)
 
-local skyFields = {
-    {"SkyboxBk", "Back Face"},
-    {"SkyboxDn", "Down Face"},
-    {"SkyboxFt", "Front Face"},
-    {"SkyboxLf", "Left Face"},
-    {"SkyboxRt", "Right Face"},
-    {"SkyboxUp", "Up Face"},
+worldSlider(postPage, "Bloom size", "Bloom spread", 0, 56, 24, 0,
+    function(v) getWorldEffect("BloomEffect", "Bloom").Size = v end)
+
+worldSlider(postPage, "Bloom threshold", "Brightness required for bloom", 0, 2, 0.95, 2,
+    function(v) getWorldEffect("BloomEffect", "Bloom").Threshold = v end)
+
+worldToggle(postPage, "Color correction", "Enable tint, saturation and contrast", false,
+    function(on) getWorldEffect("ColorCorrectionEffect", "ColorCorrection").Enabled = on end)
+
+worldSlider(postPage, "Saturation", "Lower for muted colors, higher for vivid colors", -1, 1, 0, 2,
+    function(v) getWorldEffect("ColorCorrectionEffect", "ColorCorrection").Saturation = v end)
+
+worldSlider(postPage, "Contrast", "Increase or reduce contrast", -1, 1, 0, 2,
+    function(v) getWorldEffect("ColorCorrectionEffect", "ColorCorrection").Contrast = v end)
+
+worldSlider(postPage, "Color brightness", "Brightness adjustment", -1, 1, 0, 2,
+    function(v) getWorldEffect("ColorCorrectionEffect", "ColorCorrection").Brightness = v end)
+
+worldToggle(postPage, "Sun rays", "Light rays from the sun", false,
+    function(on) getWorldEffect("SunRaysEffect", "SunRays").Enabled = on end)
+
+worldSlider(postPage, "Sun ray intensity", "Sun ray strength", 0, 1, 0.25, 2,
+    function(v) getWorldEffect("SunRaysEffect", "SunRays").Intensity = v end)
+
+worldSlider(postPage, "Sun ray spread", "Sun ray spread amount", 0, 1, 1, 2,
+    function(v) getWorldEffect("SunRaysEffect", "SunRays").Spread = v end)
+
+worldToggle(postPage, "Depth of field", "Blur objects near and far from the focus point", false,
+    function(on) getWorldEffect("DepthOfFieldEffect", "DepthOfField").Enabled = on end)
+
+worldSlider(postPage, "Focus distance", "Distance to the sharp focus plane", 0, 100, 10, 1,
+    function(v) getWorldEffect("DepthOfFieldEffect", "DepthOfField").FocusDistance = v end)
+
+worldSlider(postPage, "In-focus radius", "Area that stays sharp", 0, 100, 10, 1,
+    function(v) getWorldEffect("DepthOfFieldEffect", "DepthOfField").InFocusRadius = v end)
+
+worldSlider(postPage, "Near blur", "Blur intensity in front of focus", 0, 1, 0.75, 2,
+    function(v) getWorldEffect("DepthOfFieldEffect", "DepthOfField").NearIntensity = v end)
+
+worldSlider(postPage, "Far blur", "Blur intensity behind focus", 0, 1, 0.75, 2,
+    function(v) getWorldEffect("DepthOfFieldEffect", "DepthOfField").FarIntensity = v end)
+
+worldToggle(postPage, "Motion blur", "Soft blur effect; use a low setting for clarity", false,
+    function(on) getWorldEffect("BlurEffect", "MotionBlur").Enabled = on end)
+
+worldSlider(postPage, "Motion blur amount", "Blur size", 0, 20, 0, 1,
+    function(v) getWorldEffect("BlurEffect", "MotionBlur").Size = v end)
+
+-- SKY & WEATHER
+local skyPage = worldPages["Sky & Weather"]
+
+worldHeader(
+    skyPage,
+    "Skybox and weather",
+    "Built-in sky selection, custom sky faces, local weather and sound."
+)
+
+-- Sky presets from louder.luau. Each preset has six faces:
+-- Up, Back, Front, Down, Left, Right.
+-- To add any other preset from the source, add its six IDs to this table.
+local skyPresets = {
+    GreenHaze = {"160193458","160193404","160193461","160193466","160193469","160193463"},
+    Space2 = {"11844053742","11844076072","11844067209","11844069700","11844063543","11844058446"},
+    PinkMountains = {"160188588","160188495","160188609","160188614","160188589","160188597"},
+    Valentines = {"11427771954","11427769401","11427769401","11427770685","11427769401","11427769401"},
+    PinkArt = {"79190209626172","71607054149497","104560113223878","78865378050055","80395333901607","87570388049514"},
+    PurplePlanet = {"16262366016","16262356578","16262360469","16262358026","16262362003","16262363873"},
+    Blizzard = {"16653228333","16653221738","16653224051","16653222701","16653225849","16653227200"},
+    Winter = {"155674931","155657655","155657609","155674246","155657671","155657619"},
+    FlamingSunset = {"415688354","415688378","415688242","415688193","415688310","415688274"},
+    Mountains = {"15359412677","15359410490","15359412131","15359411132","15359411633","15359417656"},
+    FPSBoost = {"11457548274","11457548274","11457548274","11457548274","11457548274","11457548274"},
+    AestheticMountains = {"15470207755","15470198023","15470200128","15470151245","15470202648","15470204862"},
+    BetterNight3 = {"2670644331","2670643994","2670643214","2670643365","2670643070","2670644173"},
+    Galaxy2 = {"14164405298","14164368678","14164389230","14164386126","14164398493","14164402782"},
+    Aesthetic3 = {"151165227","151165214","151165224","151165197","151165191","151165206"},
+    PurpleSpace = {"15983964246","15983968922","5260817288","15983966825","15983967420","15983966246"},
+    Pink = {"271077958","271042516","271042556","271077243","271042310","271042467"},
+    PurpleNight = {"5084576400","5260808177","5260817288","5260653793","5260800833","5260800833"},
+    Flame = {"6286790025","6286780109","6286784186","6286782353","6286785801","6286788245"},
+    Galaxy3 = {"14543371676","14543264135","14543257810","14543358958","14543275895","14543280890"},
+    Storm = {"1618913654","1618912481","1618913244","1618913943","1618912849","1618911568"},
+    Milkyway = {"137817405681365","129876530632297","104400530594543","108406529909981","73372229972523","87408857415924"},
+    PurpleClouds = {"570557727","570557514","570557559","570557775","570557620","570557672"},
+    BlueClouds = {"591059642","591058823","591058104","591059876","591057861","591057625"},
+    BetterNight = {"15470303050","15470289121","15470294431","15470291746","15470297162","15470299887"},
+    Cloudy = {"4495867486","4495864450","4495865458","4495864887","4495866035","4495866584"},
+    NetherWorld = {"14365019327","14365019002","14365018399","14365023350","14365018705","14365018143"},
+    NewYork = {"11333967970","11333973069","11333964303","11333969768","11333971332","11333982864"},
+    Purple2 = {"8107849791","8107841671","8107841671","6444884785","8107841671","8107841671"},
+    FunnyStorm = {"6280942402","6280934001","6280936575","6280935347","6280938749","6280940989"},
+    Galaxy = {"159454288","159454299","159454293","159454296","159454293","159454293"},
+    BlueSpace = {"16876552681","16876541778","16876546384","16876543880","16876548320","16876550345"},
+    Purple3 = {"433274285","433274085","433274131","433274194","433274370","433274429"},
+    Nebula2 = {"16932810138","16932794531","16932800523","16932797813","16932803722","16932806825"},
+    Nebula = {"5260824661","5260808177","5260817288","5260653793","5260800833","5260811073"},
+    LunarNight = {"187712111","187713366","187712836","187712428","187713755","187714525"},
+    Purple = {"8539981085","8539982183","8539981721","8539981943","8539981424","8539980766"},
+    Hell = {"11730857150","11730840088","11730849615","11730842997","11730852920","11730855491"},
+    Nebula6 = {"16694204069","16694187412","16694194795","16694190947","16694197080","16694200892"},
+    DarkishPink = {"570555929","570555736","570555800","570555964","570555840","570555882"},
+    RedNight = {"401664936","401664839","401664960","401664862","401664881","401664901"},
+    Space = {"166510114","166509999","166510116","166510057","166510092","166510131"},
+    OverPlanet = {"165052345","165052268","165052328","165052286","165052365","165052306"},
+    Orange = {"150939082","150939022","150939047","150939038","150939056","150939063"},
+    Pastel = {"2128462236","2128458653","2128458653","2128462480","2128462027","2128462027"},
+    Beach = {"173380790","173380597","173380642","173380627","173380671","173380774"},
+    FakeClouds = {"8496897504","8496892810","8496892810","8496896250","8496892810","8496892810"},
+    Aesthetic2 = {"600835177","600830446","600832720","600831635","600886090","600833862"},
+    Nebula4 = {"17103639457","17103618635","17103624898","17103622190","17103628153","17103636666"},
+    BluePlanet = {"16889004122","16888989874","16888995219","16888991855","16888998994","16889000916"},
+    Nebula5 = {"17124369657","17124357467","17124362093","17124359797","17124365127","17124367200"},
+    LunarNight2 = {"14365026442","14365026085","14365025735","14365026242","14365025904","14365025444"},
+    Pinkie = {"11554996247","11555017034","11555010145","11555013415","11555006545","11555000712"},
+    PurpleMountains = {"17901365106","17901353811","17901356262","17901366771","17901359687","17901362326"},
+    DarkClouds = {"190477146","190477248","190477200","190477222","190477185","190477166"},
+    BetterNight2 = {"248431605","248431616","248431598","248431677","248431686","248431611"},
+    DarkMountains = {"5098819127","5098814730","5098815653","5098815227","5098816155","5098820352"},
+    Nebula3 = {"17839226876","17839210699","17839218166","17839215896","17839220800","17839223605"},
+    BetterSky = {"591059642","591058823","591058104","591059876","591057861","591057625"},
+    MagentaOrange = {"566616187","566616113","566616141","566616232","566616044","566616082"},
+    Aesthetic = {"1417494643","1417494030","1417494253","1417494146","1417494402","1417494499"},
+    Alien = {"159248176","159248188","159248187","159248183","159248173","159248192"},
+    Lunar = {"179724054","179723991","179724018","179724005","179724029","179724037"},
+    Retro = {"16642401907","16642396302","16642398372","16642397027","16642399309","16642400745"},
+    Realistic = {"402560052","402559900","402559953","402559927","402559983","402560019"},
+    Midnight = {"154185031","154185004","154185021","154184960","154184943","154184972"},
+    Antartica = {"2118766003","2118763079","2118765204","2118766919","2118764070","2118761853"},
+    Moon = {"17489393055","17489386489","17489388310","17489387417","17489389632","17489391101"},
+    NightMountains = {"264907379","264908339","264909420","264907909","264909758","264908886"},
+    Art = {"9831769868","9831762777","9831766232","9831764283","9831768023","9831768909"},
+    Ame = {"160186148","160185927","160186027","160185945","160186075","160186126"},
+    Dawn = {"250381047","250381017","250380916","254156892","250380953","250380985"},
 }
 
-local skyInputs = {}
-
-for _, item in ipairs(skyFields) do
-    local row = controlRow(skySection, 42)
-
-    makeLabel(row, "Label", item[2],
-        UDim2.fromOffset(8, 0),
-        UDim2.new(0.32, 0, 1, 0), 11, COLORS.Inactive)
-
-    local input = Instance.new("TextBox")
-    input.Name = item[1] .. "Input"
-    input.Position = UDim2.new(0.34, 0, 0, 6)
-    input.Size = UDim2.new(0.64, -8, 1, -12)
-    input.BackgroundColor3 = COLORS.Selected
-    input.BorderSizePixel = 0
-    input.PlaceholderText = "Texture asset ID"
-    input.PlaceholderColor3 = COLORS.Muted
-    input.Text = ""
-    input.TextColor3 = COLORS.White
-    input.TextSize = 11
-    input.Font = Enum.Font.Gotham
-    input.ClearTextOnFocus = false
-    input.Parent = row
-    Instance.new("UICorner", input).CornerRadius = UDim.new(0, 4)
-
-    skyInputs[item[1]] = input
+local skyNames = {}
+for name in pairs(skyPresets) do
+    table.insert(skyNames, name)
 end
+table.sort(skyNames)
 
-worldButton(skySection, "Apply Custom Skybox", function()
-    local sky = getSky()
+local selectedSky = "GreenHaze"
+local skyStatus = makeLabel(
+    skyPage, "SkyStatus", "Selected sky: " .. selectedSky,
+    UDim2.new(0, 0, 0, 0), UDim2.new(1, -4, 0, 22), 11, COLORS.Green
+)
 
-    for property, input in pairs(skyInputs) do
-        local id = input.Text:match("%d+")
-        if id then
-            sky[property] = "rbxassetid://" .. id
+local function applySky(name)
+    local data = skyPresets[name]
+    if not data then return end
+
+    local sky
+    for _, child in ipairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then
+            sky = child
+            break
         end
     end
+
+    if not sky then
+        sky = Instance.new("Sky")
+        sky.Parent = Lighting
+    end
+
+    sky.Name = "GumballWorld_Sky"
+    sky.SkyboxUp = "rbxassetid://" .. data[1]
+    sky.SkyboxBk = "rbxassetid://" .. data[2]
+    sky.SkyboxFt = "rbxassetid://" .. data[3]
+    sky.SkyboxDn = "rbxassetid://" .. data[4]
+    sky.SkyboxLf = "rbxassetid://" .. data[5]
+    sky.SkyboxRt = "rbxassetid://" .. data[6]
+    skyStatus.Text = "Applied sky: " .. name
+end
+
+worldTextBox(skyPage, "Search sky", "Enter part of a preset name", "galaxy, pink, night", function(text)
+    local query = string.lower(text)
+    for _, name in ipairs(skyNames) do
+        if query == "" or string.find(string.lower(name), query, 1, true) then
+            selectedSky = name
+            skyStatus.Text = "Selected sky: " .. name
+            return
+        end
+    end
+    skyStatus.Text = "No matching sky preset."
 end)
 
-worldButton(skySection, "Remove Custom Skybox", function()
-    local sky = Lighting:FindFirstChild("GumballCustomSky")
-    if sky then sky:Destroy() end
+worldButton(skyPage, "Previous sky", "Cycle to the previous preset", "PREVIOUS", function()
+    local index = table.find(skyNames, selectedSky) or 1
+    index = ((index - 2) % #skyNames) + 1
+    selectedSky = skyNames[index]
+    skyStatus.Text = "Selected sky: " .. selectedSky
 end)
 
-----------------------------------------------------------------
--- POST PROCESSING
-----------------------------------------------------------------
-
-local postSection = worldSection("POST PROCESSING")
-
-worldToggle(postSection, "Bloom", false, function(v)
-    bloom.Enabled = v
+worldButton(skyPage, "Next sky", "Cycle to the next preset", "NEXT", function()
+    local index = table.find(skyNames, selectedSky) or 0
+    index = (index % #skyNames) + 1
+    selectedSky = skyNames[index]
+    skyStatus.Text = "Selected sky: " .. selectedSky
 end)
 
-worldSlider(postSection, "Bloom Intensity", 0, 1, 0.2, function(v)
-    bloom.Intensity = v
+worldButton(skyPage, "Apply sky", "Apply the selected built-in skybox", "APPLY SKY", function()
+    applySky(selectedSky)
 end)
 
-worldSlider(postSection, "Bloom Size", 0, 56, 24, function(v)
-    bloom.Size = v
+local customSky = {}
+for _, face in ipairs({"SkyboxUp", "SkyboxBk", "SkyboxFt", "SkyboxDn", "SkyboxLf", "SkyboxRt"}) do
+    worldTextBox(skyPage, face, "Custom texture ID for this sky face", "rbxassetid://...", function(value)
+        customSky[face] = value
+    end)
+end
+
+worldButton(skyPage, "Apply custom sky", "Apply the custom skybox faces entered above", "APPLY CUSTOM", function()
+    local sky
+    for _, child in ipairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then sky = child; break end
+    end
+    if not sky then
+        sky = Instance.new("Sky")
+        sky.Parent = Lighting
+    end
+    sky.Name = "GumballWorld_Sky"
+
+    for face, value in pairs(customSky) do
+        if value and value ~= "" then
+            sky[face] = value:match("^rbxasset") and value or ("rbxassetid://" .. value:gsub("%D", ""))
+        end
+    end
+    skyStatus.Text = "Applied custom skybox."
 end)
 
-worldSlider(postSection, "Bloom Threshold", 0, 5, 1, function(v)
-    bloom.Threshold = v
-end)
-
-worldToggle(postSection, "Color Correction", false, function(v)
-    colorCorrection.Enabled = v
-end)
-
-worldSlider(postSection, "Color Brightness", -1, 1, 0, function(v)
-    colorCorrection.Brightness = v
-end)
-
-worldSlider(postSection, "Color Contrast", -1, 1, 0, function(v)
-    colorCorrection.Contrast = v
-end)
-
-worldSlider(postSection, "Color Saturation", -1, 1, 0, function(v)
-    colorCorrection.Saturation = v
-end)
-
-worldToggle(postSection, "Sun Rays", false, function(v)
-    sunRays.Enabled = v
-end)
-
-worldSlider(postSection, "Sun Rays Intensity", 0, 1, 0.1, function(v)
-    sunRays.Intensity = v
-end)
-
-worldSlider(postSection, "Sun Rays Spread", 0, 1, 0.5, function(v)
-    sunRays.Spread = v
-end)
-
-worldToggle(postSection, "Depth of Field", false, function(v)
-    depthOfField.Enabled = v
-end)
-
-worldSlider(postSection, "Focus Distance", 0, 1000, 50, function(v)
-    depthOfField.FocusDistance = v
-end)
-
-worldSlider(postSection, "In-Focus Radius", 0, 100, 30, function(v)
-    depthOfField.InFocusRadius = v
-end)
-
-worldSlider(postSection, "Near Blur Intensity", 0, 1, 0.1, function(v)
-    depthOfField.NearIntensity = v
-end)
-
-worldSlider(postSection, "Far Blur Intensity", 0, 1, 0.1, function(v)
-    depthOfField.FarIntensity = v
-end)
-
-worldToggle(postSection, "Motion Blur", false, function(v)
-    blur.Enabled = v
-end)
-
-worldSlider(postSection, "Blur Intensity", 0, 56, 0, function(v)
-    blur.Size = v
-end)
-
-worldButton(postSection, "Reset Post Processing", function()
-    bloom.Enabled = false
-    colorCorrection.Enabled = false
-    depthOfField.Enabled = false
-    sunRays.Enabled = false
-    blur.Enabled = false
-end)
-
-----------------------------------------------------------------
--- WEATHER & AMBIENT SOUND
-----------------------------------------------------------------
-
-local weatherSection = worldSection("WEATHER")
-
-local weatherFolder = Instance.new("Folder")
-weatherFolder.Name = "GumballLocalWeather"
-weatherFolder.Parent = workspace
-
-local weatherPart
+-- Local weather particles. Only affect the local player's view.
+local weatherOn = false
+local weatherType = "Rain"
+local weatherRate = 300
+local weatherSpeed = 90
+local weatherHeight = 50
+local weatherSize = 0.4
+local weatherAnchor
 local weatherEmitter
-local weatherEnabled = false
-local weatherPreset = "Rain"
-local weatherRate = 250
-local weatherSpeed = 70
-local weatherSize = 0.12
 local weatherConnection
 
-local function clearWeather()
+local weatherTextures = {
+    Rain = "rbxassetid://241876005",
+    Snow = "rbxasset://textures/particles/sparkles_main.dds",
+    Blizzard = "rbxasset://textures/particles/sparkles_main.dds",
+}
+
+local function stopWeather()
+    weatherOn = false
     if weatherConnection then
         weatherConnection:Disconnect()
         weatherConnection = nil
     end
-    if weatherPart then
-        weatherPart:Destroy()
-        weatherPart = nil
+    if weatherAnchor then
+        weatherAnchor:Destroy()
+        weatherAnchor = nil
         weatherEmitter = nil
     end
 end
 
-local function createWeather()
-    clearWeather()
-    if not weatherEnabled then return end
+local function startWeather()
+    stopWeather()
+    weatherOn = true
 
-    local camera = workspace.CurrentCamera
-    if not camera then return end
-
-    weatherPart = Instance.new("Part")
-    weatherPart.Name = "LocalWeatherAnchor"
-    weatherPart.Anchored = true
-    weatherPart.CanCollide = false
-    weatherPart.CanQuery = false
-    weatherPart.CanTouch = false
-    weatherPart.Transparency = 1
-    weatherPart.Size = Vector3.new(1, 1, 1)
-    weatherPart.Parent = weatherFolder
-
-    local attachment = Instance.new("Attachment")
-    attachment.Parent = weatherPart
+    weatherAnchor = Instance.new("Part")
+    weatherAnchor.Name = "GumballLocalWeather"
+    weatherAnchor.Anchored = true
+    weatherAnchor.CanCollide = false
+    weatherAnchor.CanTouch = false
+    weatherAnchor.CanQuery = false
+    weatherAnchor.Transparency = 1
+    weatherAnchor.Size = Vector3.new(1, 1, 1)
+    weatherAnchor.Parent = workspace
 
     weatherEmitter = Instance.new("ParticleEmitter")
-    weatherEmitter.Name = "WeatherParticles"
-    weatherEmitter.Parent = attachment
-    weatherEmitter.Enabled = true
+    weatherEmitter.Texture = weatherTextures[weatherType]
     weatherEmitter.Rate = weatherRate
-    weatherEmitter.Speed = NumberRange.new(weatherSpeed * 0.8, weatherSpeed)
-    weatherEmitter.Lifetime = NumberRange.new(1.5, 3)
-    weatherEmitter.SpreadAngle = Vector2.new(20, 20)
-    weatherEmitter.LightEmission = 0.1
+    weatherEmitter.Lifetime = NumberRange.new(1.2, 2.5)
+    weatherEmitter.Speed = NumberRange.new(weatherSpeed * 0.75, weatherSpeed)
+    weatherEmitter.Size = NumberSequence.new(weatherSize)
+    weatherEmitter.EmissionDirection = Enum.NormalId.Bottom
+    weatherEmitter.Acceleration = Vector3.new(0, -35, 0)
+    weatherEmitter.Parent = weatherAnchor
 
-    if weatherPreset == "Snow" then
-        weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        weatherEmitter.Rate = weatherRate * 0.4
-        weatherEmitter.Speed = NumberRange.new(5, 10)
-        weatherEmitter.Lifetime = NumberRange.new(4, 7)
-        weatherEmitter.Size = NumberSequence.new(0.2, 0.35)
-        weatherEmitter.Acceleration = Vector3.new(0, -2, 0)
-    elseif weatherPreset == "Blizzard" then
-        weatherEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-        weatherEmitter.Rate = weatherRate * 1.5
-        weatherEmitter.Speed = NumberRange.new(15, 28)
-        weatherEmitter.Lifetime = NumberRange.new(2, 4)
-        weatherEmitter.Size = NumberSequence.new(0.25, 0.4)
-        weatherEmitter.Acceleration = Vector3.new(8, -5, 0)
-    else
-        weatherEmitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
-        weatherEmitter.Rate = weatherRate
-        weatherEmitter.Speed = NumberRange.new(weatherSpeed, weatherSpeed + 20)
-        weatherEmitter.Lifetime = NumberRange.new(0.6, 1.2)
-        weatherEmitter.Size = NumberSequence.new(weatherSize)
-        weatherEmitter.Acceleration = Vector3.new(0, -30, 0)
+    if weatherType ~= "Rain" then
+        weatherEmitter.Speed = NumberRange.new(weatherSpeed * 0.1, weatherSpeed * 0.3)
+        weatherEmitter.Lifetime = NumberRange.new(3, 6)
+        weatherEmitter.Acceleration = Vector3.new(0, -4, 0)
+        weatherEmitter.SpreadAngle = Vector2.new(weatherType == "Blizzard" and 45 or 12, weatherType == "Blizzard" and 45 or 12)
     end
 
     weatherConnection = RunService.RenderStepped:Connect(function()
-        local currentCamera = workspace.CurrentCamera
-        if currentCamera and weatherPart then
-            weatherPart.CFrame = currentCamera.CFrame * CFrame.new(0, 18, -8)
+        local camera = workspace.CurrentCamera
+        if weatherAnchor and camera then
+            weatherAnchor.CFrame = CFrame.new(camera.CFrame.Position + Vector3.new(0, weatherHeight, 0))
         end
     end)
 end
 
-worldToggle(weatherSection, "Enable Weather", false, function(v)
-    weatherEnabled = v
-    createWeather()
+worldToggle(skyPage, "Weather", "Enable local rain or snow particles", false, function(on)
+    if on then startWeather() else stopWeather() end
 end)
 
-worldButton(weatherSection, "Weather Preset: Rain", function()
-    weatherPreset = "Rain"
-    if weatherEnabled then createWeather() end
+worldButton(skyPage, "Weather preset", "Cycle Rain, Snow and Blizzard", "CHANGE TYPE", function()
+    local types = {"Rain", "Snow", "Blizzard"}
+    local index = table.find(types, weatherType) or 1
+    weatherType = types[(index % #types) + 1]
+    if weatherOn then startWeather() end
 end)
 
-worldButton(weatherSection, "Weather Preset: Snow", function()
-    weatherPreset = "Snow"
-    if weatherEnabled then createWeather() end
-end)
-
-worldButton(weatherSection, "Weather Preset: Blizzard", function()
-    weatherPreset = "Blizzard"
-    if weatherEnabled then createWeather() end
-end)
-
-worldSlider(weatherSection, "Weather Rate", 0, 1000, weatherRate, function(v)
+worldSlider(skyPage, "Weather rate", "Particle density", 0, 1000, weatherRate, 0, function(v)
     weatherRate = v
-    if weatherEmitter then
-        weatherEmitter.Rate = v
-    end
+    if weatherEmitter then weatherEmitter.Rate = v end
 end)
 
-worldSlider(weatherSection, "Rain Speed", 1, 150, weatherSpeed, function(v)
+worldSlider(skyPage, "Weather speed", "Particle falling speed", 5, 160, weatherSpeed, 0, function(v)
     weatherSpeed = v
-    if weatherEmitter and weatherPreset == "Rain" then
-        weatherEmitter.Speed = NumberRange.new(v * 0.8, v)
-    end
+    if weatherEmitter then weatherEmitter.Speed = NumberRange.new(v * 0.75, v) end
 end)
 
-worldSlider(weatherSection, "Rain Particle Size", 0.05, 1, weatherSize, function(v)
+worldSlider(skyPage, "Weather size", "Particle size", 0.1, 3, weatherSize, 1, function(v)
     weatherSize = v
-    if weatherEmitter and weatherPreset == "Rain" then
-        weatherEmitter.Size = NumberSequence.new(v)
+    if weatherEmitter then weatherEmitter.Size = NumberSequence.new(v) end
+end)
+
+worldSlider(skyPage, "Weather height", "Emitter height above your camera", 10, 120, weatherHeight, 0, function(v)
+    weatherHeight = v
+end)
+
+-- The original source supports custom ambient and thunder SoundIds.
+local ambienceSound
+local ambienceEnabled = false
+local ambienceVolume = 0.5
+
+worldTextBox(skyPage, "Ambient SoundId", "Enter a Roblox audio asset ID", "rbxassetid://...", function(value)
+    if ambienceSound then
+        ambienceSound:Stop()
+        ambienceSound:Destroy()
+        ambienceSound = nil
+    end
+
+    if value ~= "" then
+        ambienceSound = Instance.new("Sound")
+        ambienceSound.Name = "GumballLocalAmbience"
+        ambienceSound.SoundId = value:match("^rbxasset") and value or ("rbxassetid://" .. value:gsub("%D", ""))
+        ambienceSound.Volume = ambienceVolume
+        ambienceSound.Looped = true
+        ambienceSound.Parent = workspace.CurrentCamera or workspace
+
+        if ambienceEnabled then ambienceSound:Play() end
     end
 end)
 
-----------------------------------------------------------------
--- LIGHTNING
-----------------------------------------------------------------
-
-local lightningSection = worldSection("LIGHTNING")
-
-local lightningEnabled = false
-local lightningFlash
-local lightningSound
-
-worldToggle(lightningSection, "Enable Lightning Flash", false, function(v)
-    lightningEnabled = v
-end)
-
-worldButton(lightningSection, "Test Lightning Flash", function()
-    local original = Lighting.Brightness
-    Lighting.Brightness = math.max(original, 5)
-
-    task.delay(0.12, function()
-        if Lighting then
-            Lighting.Brightness = original
-        end
-    end)
-end)
-
-worldButton(lightningSection, "Stop Weather & Lightning", function()
-    weatherEnabled = false
-    lightningEnabled = false
-    clearWeather()
-end)
-
-----------------------------------------------------------------
--- AMBIENT SOUND
-----------------------------------------------------------------
-
-local soundSection = worldSection("AMBIENT SOUND")
-
-local ambientSound = SoundService:FindFirstChild("GumballAmbientSound")
-if not ambientSound then
-    ambientSound = Instance.new("Sound")
-    ambientSound.Name = "GumballAmbientSound"
-    ambientSound.Looped = true
-    ambientSound.Volume = 0.5
-    ambientSound.Parent = SoundService
-end
-
-local soundRow = controlRow(soundSection, 42)
-
-local soundInput = Instance.new("TextBox")
-soundInput.Position = UDim2.fromOffset(6, 6)
-soundInput.Size = UDim2.new(1, -12, 1, -12)
-soundInput.BackgroundColor3 = COLORS.Selected
-soundInput.BorderSizePixel = 0
-soundInput.PlaceholderText = "Sound asset ID"
-soundInput.PlaceholderColor3 = COLORS.Muted
-soundInput.Text = ""
-soundInput.TextColor3 = COLORS.White
-soundInput.TextSize = 12
-soundInput.Font = Enum.Font.Gotham
-soundInput.ClearTextOnFocus = false
-soundInput.Parent = soundRow
-Instance.new("UICorner", soundInput).CornerRadius = UDim.new(0, 5)
-
-worldButton(soundSection, "Apply Ambient Sound", function()
-    local id = soundInput.Text:match("%d+")
-    if id then
-        ambientSound.SoundId = "rbxassetid://" .. id
-        ambientSound:Play()
+worldToggle(skyPage, "Ambient sound", "Play the custom ambience sound", false, function(on)
+    ambienceEnabled = on
+    if ambienceSound then
+        if on then ambienceSound:Play() else ambienceSound:Pause() end
     end
 end)
 
-worldSlider(soundSection, "Ambient Sound Volume", 0, 3, 0.5, function(v)
-    ambientSound.Volume = v
+worldSlider(skyPage, "Ambient volume", "Volume for the custom ambience", 0, 1, ambienceVolume, 2, function(v)
+    ambienceVolume = v
+    if ambienceSound then ambienceSound.Volume = v end
 end)
 
-worldButton(soundSection, "Stop Ambient Sound", function()
-    ambientSound:Stop()
+local thunderSoundId = ""
+local lightningOn = false
+local lightningInterval = 8
+local lightningFlash = 0.8
+local lightningToken = 0
+
+worldTextBox(skyPage, "Thunder SoundId", "Optional thunder audio asset ID", "rbxassetid://...", function(value)
+    thunderSoundId = value
 end)
 
-worldButton(worldScroll, "RESET WORLD SETTINGS", function()
-    Lighting.ClockTime = originalLighting.ClockTime
-    Lighting.Brightness = originalLighting.Brightness
-    Lighting.ExposureCompensation = originalLighting.ExposureCompensation
-    Lighting.GeographicLatitude = originalLighting.GeographicLatitude
-    Lighting.GlobalShadows = originalLighting.GlobalShadows
-    Lighting.Ambient = originalLighting.Ambient
-    Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
-    Lighting.EnvironmentDiffuseScale = originalLighting.EnvironmentDiffuseScale
-    Lighting.EnvironmentSpecularScale = originalLighting.EnvironmentSpecularScale
-    Lighting.FogColor = originalLighting.FogColor
-    Lighting.FogStart = originalLighting.FogStart
-    Lighting.FogEnd = originalLighting.FogEnd
-
-    bloom.Enabled = false
-    colorCorrection.Enabled = false
-    depthOfField.Enabled = false
-    sunRays.Enabled = false
-    blur.Enabled = false
-    atmosphere.Density = 0
-    atmosphere.Haze = 0
-    atmosphere.Glare = 0
-
-    weatherEnabled = false
-    lightningEnabled = false
-    clearWeather()
-    ambientSound:Stop()
-
-    local customSky = Lighting:FindFirstChild("GumballCustomSky")
-    if customSky then customSky:Destroy() end
+worldSlider(skyPage, "Lightning interval", "Average delay between lightning flashes", 2, 30, lightningInterval, 0, function(v)
+    lightningInterval = v
 end)
 
-----------------------------------------------------------------
--- MISC TAB
-----------------------------------------------------------------
-
-local miscPage = pageFrames.Misc
-
-makeLabel(miscPage, "SectionTitle", "UNLOCK ALL",
-    UDim2.fromOffset(24, 18), UDim2.new(1, -48, 0, 26),
-    17, COLORS.White, Enum.Font.GothamBold)
-
-makeLabel(miscPage, "SectionSubtitle", "Cosmetic unlock settings",
-    UDim2.fromOffset(24, 44), UDim2.new(1, -48, 0, 20),
-    12, COLORS.Inactive)
-
-local sectionLine = Instance.new("Frame")
-sectionLine.Position = UDim2.fromOffset(24, 72)
-sectionLine.Size = UDim2.new(1, -48, 0, 1)
-sectionLine.BackgroundColor3 = COLORS.Divider
-sectionLine.BorderSizePixel = 0
-sectionLine.Parent = miscPage
-
-local status
-local selectedTypes = {}
-local selectedRarities = {
-    Legendary = true,
-    Mythical = true,
-    Unobtainable = true,
-}
-
-local unlockAllButton = Instance.new("TextButton")
-unlockAllButton.Name = "UnlockAllButton"
-unlockAllButton.Position = UDim2.new(1, -204, 0, 88)
-unlockAllButton.Size = UDim2.fromOffset(180, 42)
-unlockAllButton.BackgroundColor3 = COLORS.Green
-unlockAllButton.BorderSizePixel = 0
-unlockAllButton.Text = "UNLOCK ALL"
-unlockAllButton.TextColor3 = COLORS.Background
-unlockAllButton.TextSize = 13
-unlockAllButton.Font = Enum.Font.GothamBold
-unlockAllButton.Parent = miscPage
-Instance.new("UICorner", unlockAllButton).CornerRadius = UDim.new(0, 8)
-
-local unlockAllStroke = Instance.new("UIStroke")
-unlockAllStroke.Color = COLORS.Border
-unlockAllStroke.Thickness = 1
-unlockAllStroke.Parent = unlockAllButton
-
-local function setStatus(message, color)
-    status.Text = message
-    status.TextColor3 = color or COLORS.Amber
-end
-
-unlockAllButton.Activated:Connect(function()
-    if not unlockRemote or not unlockRemote:IsA("RemoteFunction") then
-        setStatus("Missing GumballUnlockCosmetics RemoteFunction.")
-        return
-    end
-
-    unlockAllButton.Text = "UNLOCKING..."
-    unlockAllButton.Active = false
-
-    local ok, result = pcall(function()
-        return unlockRemote:InvokeServer({
-            enabled = true,
-            types = {},
-            rarities = {},
-        })
-    end)
-
-    unlockAllButton.Text = "UNLOCK ALL"
-    unlockAllButton.Active = true
-
-    if ok and type(result) == "table" then
-        setStatus(
-            result.message or "Unlock request completed.",
-            result.ok == false and COLORS.Amber or COLORS.Green
-        )
-    elseif ok and result then
-        setStatus("Unlock request completed.", COLORS.Green)
-    else
-        setStatus("Unlock request failed. Check your server script.")
-    end
+worldSlider(skyPage, "Lightning flash", "Brightness added during each flash", 0.1, 5, lightningFlash, 1, function(v)
+    lightningFlash = v
 end)
 
-makeLabel(miscPage, "TypesTitle", "Cosmetic Types to Unlock",
-    UDim2.fromOffset(24, 224), UDim2.new(1, -48, 0, 22),
-    13, COLORS.White, Enum.Font.GothamMedium)
+worldToggle(skyPage, "Lightning", "Enable local lightning flashes and optional thunder", false, function(on)
+    lightningOn = on
+    lightningToken += 1
+    local token = lightningToken
 
-makeLabel(miscPage, "TypesHint", "Tap a type to select it",
-    UDim2.fromOffset(24, 246), UDim2.new(1, -48, 0, 18),
-    11, COLORS.Inactive)
+    if on then
+        task.spawn(function()
+            while lightningOn and token == lightningToken do
+                task.wait(math.random(
+                    math.max(1, lightningInterval - 2),
+                    lightningInterval + 2
+                ))
 
-local function makeChips(parent, options, startY, selectedMap, prefix)
-    local chipFrame = Instance.new("Frame")
-    chipFrame.Name = prefix .. "Options"
-    chipFrame.Position = UDim2.fromOffset(24, startY)
-    chipFrame.Size = UDim2.new(1, -48, 0, 72)
-    chipFrame.BackgroundTransparency = 1
-    chipFrame.Parent = parent
+                if not lightningOn or token ~= lightningToken then break end
 
-    local grid = Instance.new("UIGridLayout")
-    grid.CellSize = UDim2.new(0, 132, 0, 28)
-    grid.CellPadding = UDim2.fromOffset(8, 8)
-    grid.SortOrder = Enum.SortOrder.LayoutOrder
-    grid.Parent = chipFrame
+                local previousBrightness = Lighting.Brightness
+                Lighting.Brightness = math.clamp(previousBrightness + lightningFlash, 0, 10)
+                task.wait(0.12)
+                Lighting.Brightness = previousBrightness
 
-    for i, option in ipairs(options) do
-        local chip = Instance.new("TextButton")
-        chip.Name = option .. "Option"
-        chip.LayoutOrder = i
-        chip.BackgroundColor3 =
-            selectedMap[option] and COLORS.Selected or COLORS.Background
-        chip.BorderSizePixel = 0
-        chip.Text = option
-        chip.TextColor3 =
-            selectedMap[option] and COLORS.White or COLORS.Inactive
-        chip.TextSize = 11
-        chip.Font = Enum.Font.Gotham
-        chip.Parent = chipFrame
-        Instance.new("UICorner", chip).CornerRadius = UDim.new(0, 6)
-
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = selectedMap[option] and COLORS.White or COLORS.Border
-        stroke.Thickness = 1
-        stroke.Parent = chip
-
-        chip.Activated:Connect(function()
-            selectedMap[option] = not selectedMap[option]
-            chip.BackgroundColor3 =
-                selectedMap[option] and COLORS.Selected or COLORS.Background
-            chip.TextColor3 =
-                selectedMap[option] and COLORS.White or COLORS.Inactive
-            stroke.Color =
-                selectedMap[option] and COLORS.White or COLORS.Border
-        end)
-    end
-end
-
-makeChips(miscPage,
-    {"Skins", "Wraps", "Charms", "Finishers", "Emotes"},
-    270, selectedTypes, "Type")
-
-makeLabel(miscPage, "RaritiesTitle", "Cosmetic Rarities to Unlock",
-    UDim2.fromOffset(24, 354), UDim2.new(1, -48, 0, 22),
-    13, COLORS.White, Enum.Font.GothamMedium)
-
-makeLabel(miscPage, "RaritiesHint",
-    "Legendary, Mythical and Unobtainable selected by default",
-    UDim2.fromOffset(24, 376), UDim2.new(1, -48, 0, 18),
-    11, COLORS.Inactive)
-
-makeChips(miscPage,
-    {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical", "Unobtainable"},
-    400, selectedRarities, "Rarity")
-
-status = makeLabel(miscPage, "Status",
-    "Ready. Unlock All requires your own game's server implementation.",
-    UDim2.new(0, 24, 1, -34), UDim2.new(1, -48, 0, 22),
-    11, COLORS.Amber)
-status.TextWrapped = true
-
-if not unlockRemote or not unlockRemote:IsA("RemoteFunction") then
-    status.Text = "Missing ReplicatedStorage.GumballUnlockCosmetics RemoteFunction."
-    status.TextColor3 = COLORS.Amber
-end
-
-----------------------------------------------------------------
--- WINDOW DRAGGING
-----------------------------------------------------------------
-
-local dragging = false
-local dragStart
-local startPosition
-local dragInput
-
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-
-        local overTabs =
-            input.Position.X >= tabs.AbsolutePosition.X
-            and input.Position.X <= tabs.AbsolutePosition.X + tabs.AbsoluteSize.X
-            and input.Position.Y >= tabs.AbsolutePosition.Y
-            and input.Position.Y <= tabs.AbsolutePosition.Y + tabs.AbsoluteSize.Y
-
-        if overTabs then return end
-
-        dragging = true
-        dragStart = input.Position
-        startPosition = window.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                if thunderSoundId ~= "" then
+                    local sound = Instance.new("Sound")
+                    sound.Name = "GumballLocalThunder"
+                    sound.SoundId = thunderSoundId:match("^rbxasset") and thunderSoundId or ("rbxassetid://" .. thunderSoundId:gsub("%D", ""))
+                    sound.Volume = 0.7
+                    sound.Parent = workspace.CurrentCamera or workspace
+                    sound:Play()
+                    sound.Ended:Connect(function() sound:Destroy() end)
+                    task.delay(12, function()
+                        if sound.Parent then sound:Destroy() end
+                    end)
+                end
             end
         end)
     end
 end)
 
-header.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
+worldButton(skyPage, "Reset World", "Restore original lighting and remove Gumball's weather/effects", "RESET WORLD", function()
+    stopWeather()
+    lightningOn = false
+    lightningToken += 1
+
+    if ambienceSound then
+        ambienceSound:Stop()
+        ambienceSound:Destroy()
+        ambienceSound = nil
     end
-end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input == dragInput then
-        local delta = input.Position - dragStart
-
-        window.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y
-        )
+    for property, value in pairs(originalLighting) do
+        pcall(function()
+            Lighting[property] = value
+        end)
     end
-end)
 
-----------------------------------------------------------------
--- PC AND MOBILE TOGGLES
-----------------------------------------------------------------
-
-UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then
-        window.Visible = not window.Visible
+    for _, child in ipairs(Lighting:GetChildren()) do
+        if child.Name:match("^GumballWorld_") then
+            child:Destroy()
+        end
     end
+
+    for _, child in ipairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then
+            child:Destroy()
+        end
+    end
+
+    if originalSky then
+        originalSky:Clone().Parent = Lighting
+    end
+
+    for _, name in ipairs({
+        "Bloom", "ColorCorrection", "SunRays",
+        "DepthOfField", "MotionBlur", "Atmosphere"
+    }) do
+        local effect = Lighting:FindFirstChild("GumballWorld_" .. name)
+        if effect then effect:Destroy() end
+    end
+
+    skyStatus.Text = "World settings reset."
 end)
 
-local mobileToggle = Instance.new("TextButton")
-mobileToggle.Name = "MobileToggle"
-mobileToggle.Position = UDim2.fromOffset(12, 70)
-mobileToggle.Size = UDim2.fromOffset(38, 38)
-mobileToggle.BackgroundColor3 = COLORS.Header
-mobileToggle.Text = "G"
-mobileToggle.TextColor3 = COLORS.White
-mobileToggle.TextSize = 17
-mobileToggle.Font = Enum.Font.GothamBold
-mobileToggle.Visible = UserInputService.TouchEnabled
-mobileToggle.AutoButtonColor = true
-mobileToggle.Parent = gui
-Instance.new("UICorner", mobileToggle).CornerRadius = UDim.new(0, 8)
-
-local toggleBorder = Instance.new("UIStroke")
-toggleBorder.Color = COLORS.Border
-toggleBorder.Thickness = 1
-toggleBorder.Parent = mobileToggle
-
-mobileToggle.Activated:Connect(function()
-    window.Visible = not window.Visible
-end)
-
-gui.Destroying:Connect(function()
-    clearWeather()
-    if weatherFolder then weatherFolder:Destroy() end
-    if ambientSound then ambientSound:Stop() end
-end)
+selectWorldTab("Lighting")
