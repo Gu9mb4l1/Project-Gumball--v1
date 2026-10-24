@@ -60,7 +60,6 @@ local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.CornerRadius = UDim.new(0, 6)
 HeaderCorner.Parent = Header
 
--- Cover the bottom rounded corners of the header
 local HeaderCover = Instance.new("Frame")
 HeaderCover.Size = UDim2.new(1, 0, 0, 8)
 HeaderCover.Position = UDim2.new(0, 0, 1, -8)
@@ -81,7 +80,7 @@ Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
--- Categories container
+-- Main categories container
 local Categories = Instance.new("ScrollingFrame")
 Categories.Name = "Categories"
 Categories.Position = UDim2.new(0, 132, 0, 0)
@@ -113,7 +112,7 @@ HeaderDivider.BorderSizePixel = 0
 HeaderDivider.ZIndex = 5
 HeaderDivider.Parent = Header
 
--- Empty content area
+-- Content area
 local Content = Instance.new("Frame")
 Content.Name = "Content"
 Content.Position = UDim2.new(0, 0, 0, 66)
@@ -137,7 +136,7 @@ RightSide.BackgroundTransparency = 1
 RightSide.BorderSizePixel = 0
 RightSide.Parent = Content
 
--- Tabs
+-- Main tabs
 local CategoryNames = {
     "Main",
     "World",
@@ -160,36 +159,174 @@ local CategoryWidths = {
 
 local CategoryButtons = {}
 local ActiveIndicators = {}
+local CategoryPages = {}
 local SelectedCategory = "Main"
 
-local function SelectCategory(CategoryName)
-    SelectedCategory = CategoryName
+-- Main tab subcategories
+local SubcategoryNames = {
+    "Main",
+    "Rage",
+    "Weapons"
+}
 
-    for _, Name in ipairs(CategoryNames) do
-        local Button = CategoryButtons[Name]
-        local Indicator = ActiveIndicators[Name]
+local SelectedSubcategory = "Main"
+local SubcategoryButtons = {}
+local SubcategoryIndicators = {}
+local SubcategoryPages = {}
+
+-- Create an empty page
+local function CreatePage(Name, Parent)
+    local Page = Instance.new("Frame")
+    Page.Name = Name
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.Visible = false
+    Page.Parent = Parent
+    return Page
+end
+
+-- Create top-level pages
+for _, Name in ipairs(CategoryNames) do
+    CategoryPages[Name] = CreatePage(Name .. "Page", Content)
+end
+
+-- Subcategory navigation bar
+local SubcategoryBar = Instance.new("Frame")
+SubcategoryBar.Name = "SubcategoryBar"
+SubcategoryBar.Position = UDim2.fromOffset(14, 12)
+SubcategoryBar.Size = UDim2.new(1, -28, 0, 34)
+SubcategoryBar.BackgroundTransparency = 1
+SubcategoryBar.BorderSizePixel = 0
+SubcategoryBar.Visible = true
+SubcategoryBar.Parent = CategoryPages.Main
+
+local SubcategoryLayout = Instance.new("UIListLayout")
+SubcategoryLayout.FillDirection = Enum.FillDirection.Horizontal
+SubcategoryLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+SubcategoryLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+SubcategoryLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SubcategoryLayout.Padding = UDim.new(0, 8)
+SubcategoryLayout.Parent = SubcategoryBar
+
+-- Area for the selected subcategory
+local SubcategoryContent = Instance.new("Frame")
+SubcategoryContent.Name = "SubcategoryContent"
+SubcategoryContent.Position = UDim2.fromOffset(14, 54)
+SubcategoryContent.Size = UDim2.new(1, -28, 1, -66)
+SubcategoryContent.BackgroundTransparency = 1
+SubcategoryContent.BorderSizePixel = 0
+SubcategoryContent.Parent = CategoryPages.Main
+
+for _, Name in ipairs(SubcategoryNames) do
+    SubcategoryPages[Name] = CreatePage(Name .. "SubcategoryPage", SubcategoryContent)
+end
+
+local function SelectSubcategory(Name)
+    SelectedSubcategory = Name
+
+    for _, SubName in ipairs(SubcategoryNames) do
+        local Button = SubcategoryButtons[SubName]
+        local Indicator = SubcategoryIndicators[SubName]
+        local Page = SubcategoryPages[SubName]
 
         if Button then
-            if Name == SelectedCategory then
-                Button.TextColor3 = TextColor
-            else
-                Button.TextColor3 = MutedColor
-            end
+            Button.TextColor3 = SubName == Name
+                and TextColor
+                or MutedColor
         end
 
         if Indicator then
-            Indicator.Visible = Name == SelectedCategory
+            Indicator.Visible = SubName == Name
+        end
+
+        if Page then
+            Page.Visible = SubName == Name
         end
     end
 end
 
-for Index, CategoryName in ipairs(CategoryNames) do
+for Index, Name in ipairs(SubcategoryNames) do
     local Button = Instance.new("TextButton")
-    Button.Name = CategoryName
+    Button.Name = Name
+    Button.Size = UDim2.fromOffset(
+        Name == "Weapons" and 100 or 82,
+        32
+    )
+    Button.BackgroundColor3 = HeaderColor
+    Button.BackgroundTransparency = 0
+    Button.BorderSizePixel = 0
+    Button.Text = Name
+    Button.TextColor3 = MutedColor
+    Button.TextSize = 13
+    Button.Font = Enum.Font.Gotham
+    Button.LayoutOrder = Index
+    Button.AutoButtonColor = false
+    Button.Parent = SubcategoryBar
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 4)
+    Corner.Parent = Button
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = LineColor
+    Stroke.Thickness = 1
+    Stroke.Parent = Button
+
+    local Indicator = Instance.new("Frame")
+    Indicator.Name = "ActiveIndicator"
+    Indicator.Size = UDim2.new(1, -20, 0, 2)
+    Indicator.AnchorPoint = Vector2.new(0.5, 1)
+    Indicator.Position = UDim2.new(0.5, 0, 1, -3)
+    Indicator.BackgroundColor3 = TextColor
+    Indicator.BorderSizePixel = 0
+    Indicator.Visible = false
+    Indicator.Parent = Button
+
+    SubcategoryButtons[Name] = Button
+    SubcategoryIndicators[Name] = Indicator
+
+    Button.Activated:Connect(function()
+        SelectSubcategory(Name)
+    end)
+end
+
+local function SelectCategory(Name)
+    SelectedCategory = Name
+
+    for _, CategoryName in ipairs(CategoryNames) do
+        local Button = CategoryButtons[CategoryName]
+        local Indicator = ActiveIndicators[CategoryName]
+        local Page = CategoryPages[CategoryName]
+
+        if Button then
+            Button.TextColor3 = CategoryName == Name
+                and TextColor
+                or MutedColor
+        end
+
+        if Indicator then
+            Indicator.Visible = CategoryName == Name
+        end
+
+        if Page then
+            Page.Visible = CategoryName == Name
+        end
+    end
+
+    if Name == "Main" then
+        SelectSubcategory(SelectedSubcategory)
+    end
+end
+
+-- Create top-level category buttons
+for Index, Name in ipairs(CategoryNames) do
+    local Button = Instance.new("TextButton")
+    Button.Name = Name
     Button.Size = UDim2.new(0, CategoryWidths[Index], 1, 0)
     Button.BackgroundTransparency = 1
     Button.BorderSizePixel = 0
-    Button.Text = CategoryName
+    Button.Text = Name
     Button.TextColor3 = MutedColor
     Button.TextSize = 13
     Button.Font = Enum.Font.Gotham
@@ -199,7 +336,12 @@ for Index, CategoryName in ipairs(CategoryNames) do
 
     local Indicator = Instance.new("Frame")
     Indicator.Name = "ActiveIndicator"
-    Indicator.Size = UDim2.new(0, math.max(20, CategoryWidths[Index] - 28), 0, 2)
+    Indicator.Size = UDim2.new(
+        0,
+        math.max(20, CategoryWidths[Index] - 28),
+        0,
+        2
+    )
     Indicator.AnchorPoint = Vector2.new(0.5, 1)
     Indicator.Position = UDim2.new(0.5, 0, 1, -2)
     Indicator.BackgroundColor3 = TextColor
@@ -207,14 +349,16 @@ for Index, CategoryName in ipairs(CategoryNames) do
     Indicator.Visible = false
     Indicator.Parent = Button
 
-    CategoryButtons[CategoryName] = Button
-    ActiveIndicators[CategoryName] = Indicator
+    CategoryButtons[Name] = Button
+    ActiveIndicators[Name] = Indicator
 
     Button.Activated:Connect(function()
-        SelectCategory(CategoryName)
+        SelectCategory(Name)
     end)
 end
 
+-- Initial page selection
+SelectSubcategory("Main")
 SelectCategory("Main")
 
 -- Drag the main window
@@ -277,10 +421,7 @@ end)
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "Toggle"
 ToggleButton.Size = UDim2.fromOffset(76, 38)
-
--- Lower position so it does not overlap Roblox's mobile menu button
 ToggleButton.Position = UDim2.fromOffset(12, 70)
-
 ToggleButton.BackgroundColor3 = BackgroundColor
 ToggleButton.BorderSizePixel = 0
 ToggleButton.Text = "Toggle"
@@ -302,7 +443,7 @@ ToggleStroke.Color = LineColor
 ToggleStroke.Thickness = 1
 ToggleStroke.Parent = ToggleButton
 
--- Allow dragging the Toggle only while the menu is closed
+-- Drag Toggle only while menu is closed
 local ToggleDragging = false
 local ToggleDragStart
 local ToggleStartPosition
