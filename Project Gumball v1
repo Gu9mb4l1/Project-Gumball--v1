@@ -121,53 +121,20 @@ Content.BackgroundTransparency = 1
 Content.BorderSizePixel = 0
 Content.Parent = Window
 
--- Top-level tabs and their sub-tabs
+-- Tab definitions
 local TabDefinitions = {
-    Main = {
-        "Main",
-        "Rage",
-        "Weapons"
-    },
-
-    World = {
-        "Lighting",
-        "Custom World",
-        "Custom Sky"
-    },
-
-    ESP = {
-        "ESP",
-        "Crosshair",
-        "Weapon Visuals",
-        "Camera"
-    },
-
+    Main = {"Main", "Rage", "Weapons"},
+    World = {"Lighting", "Custom World", "Custom Sky"},
+    ESP = {"ESP", "Crosshair", "Weapon Visuals", "Camera"},
     Visuals = {},
-
-    Character = {
-        "Movement"
-    },
-
-    Misc = {
-        "Cosmetic",
-        "Rank",
-        "Detection"
-    },
-
-    Settings = {
-        "General",
-        "Config"
-    }
+    Character = {"Movement"},
+    Misc = {"Cosmetic", "Rank", "Detection"},
+    Settings = {"General", "Config"}
 }
 
 local TabOrder = {
-    "Main",
-    "World",
-    "ESP",
-    "Visuals",
-    "Character",
-    "Misc",
-    "Settings"
+    "Main", "World", "ESP", "Visuals",
+    "Character", "Misc", "Settings"
 }
 
 local TabWidths = {
@@ -183,14 +150,11 @@ local TabWidths = {
 local TabButtons = {}
 local TabIndicators = {}
 local TabPages = {}
-
 local SubTabButtons = {}
 local SubTabIndicators = {}
 local SubTabPages = {}
-local SelectedTab = "Main"
 local SelectedSubTab = {}
 
--- Create a page
 local function CreatePage(Name, Parent)
     local Page = Instance.new("Frame")
     Page.Name = Name
@@ -199,26 +163,27 @@ local function CreatePage(Name, Parent)
     Page.BorderSizePixel = 0
     Page.Visible = false
     Page.Parent = Parent
-
     return Page
 end
 
--- Create top-level pages
+-- Create pages and sub-tabs
 for _, TabName in ipairs(TabOrder) do
     TabPages[TabName] = CreatePage(TabName .. "Page", Content)
-end
 
--- Create each tab's sub-tab bar and empty pages
-for _, TabName in ipairs(TabOrder) do
     local SubTabs = TabDefinitions[TabName]
 
     if #SubTabs > 0 then
-        local SubTabBar = Instance.new("Frame")
+        local SubTabBar = Instance.new("ScrollingFrame")
         SubTabBar.Name = "SubTabBar"
         SubTabBar.Position = UDim2.fromOffset(14, 12)
         SubTabBar.Size = UDim2.new(1, -28, 0, 34)
         SubTabBar.BackgroundTransparency = 1
         SubTabBar.BorderSizePixel = 0
+        SubTabBar.ScrollBarThickness = 0
+        SubTabBar.ScrollingDirection = Enum.ScrollingDirection.X
+        SubTabBar.AutomaticCanvasSize = Enum.AutomaticSize.X
+        SubTabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+        SubTabBar.Active = true
         SubTabBar.Parent = TabPages[TabName]
 
         local Layout = Instance.new("UIListLayout")
@@ -242,9 +207,10 @@ for _, TabName in ipairs(TabOrder) do
         SubTabPages[TabName] = {}
 
         for Index, SubTabName in ipairs(SubTabs) do
-            local PageName = SubTabName:gsub("%s+", "") .. "Page"
-
-            local Page = CreatePage(PageName, SubTabContent)
+            local Page = CreatePage(
+                SubTabName:gsub("%s+", "") .. "Page",
+                SubTabContent
+            )
             SubTabPages[TabName][SubTabName] = Page
 
             local Button = Instance.new("TextButton")
@@ -300,9 +266,7 @@ for _, TabName in ipairs(TabOrder) do
             end)
         end
 
-        -- Default sub-tab for this tab
         SelectedSubTab[TabName] = SubTabs[1]
-
         SubTabButtons[TabName][SubTabs[1]].TextColor3 = TextColor
         SubTabIndicators[TabName][SubTabs[1]].Visible = true
         SubTabPages[TabName][SubTabs[1]].Visible = true
@@ -311,8 +275,6 @@ end
 
 -- Select top-level tab
 local function SelectTab(TabName)
-    SelectedTab = TabName
-
     for _, Name in ipairs(TabOrder) do
         local Selected = Name == TabName
 
@@ -324,7 +286,7 @@ local function SelectTab(TabName)
     end
 end
 
--- Create top-level tab buttons
+-- Create top-level buttons
 for Index, TabName in ipairs(TabOrder) do
     local Button = Instance.new("TextButton")
     Button.Name = TabName .. "Button"
@@ -342,10 +304,7 @@ for Index, TabName in ipairs(TabOrder) do
     local Indicator = Instance.new("Frame")
     Indicator.Name = "ActiveIndicator"
     Indicator.Size = UDim2.new(
-        0,
-        math.max(20, TabWidths[TabName] - 28),
-        0,
-        2
+        0, math.max(20, TabWidths[TabName] - 28), 0, 2
     )
     Indicator.AnchorPoint = Vector2.new(0.5, 1)
     Indicator.Position = UDim2.new(0.5, 0, 1, -2)
@@ -362,7 +321,49 @@ for Index, TabName in ipairs(TabOrder) do
     end)
 end
 
--- Initial tab
+-- Responsive sizing: smaller on mobile, original size on PC
+local function UpdateMenuSize()
+    local Camera = workspace.CurrentCamera
+    if not Camera then
+        return
+    end
+
+    local Viewport = Camera.ViewportSize
+
+    if IsMobile then
+        local Width = math.min(500, Viewport.X - 24)
+        local Height = math.min(340, Viewport.Y - 100)
+
+        Width = math.max(280, Width)
+        Height = math.max(240, Height)
+
+        Window.Size = UDim2.fromOffset(Width, Height)
+        Window.Position = UDim2.new(0.5, -Width / 2, 0.5, -Height / 2)
+
+        Title.TextSize = 16
+        Title.Size = UDim2.new(0, 95, 1, 0)
+
+        Categories.Position = UDim2.new(0, 110, 0, 0)
+        Categories.Size = UDim2.new(1, -116, 1, 0)
+    else
+        Window.Size = UDim2.fromOffset(620, 390)
+        Window.Position = UDim2.new(0.5, -310, 0.5, -195)
+
+        Title.TextSize = 18
+        Title.Size = UDim2.new(0, 115, 1, 0)
+
+        Categories.Position = UDim2.new(0, 132, 0, 0)
+        Categories.Size = UDim2.new(1, -140, 1, 0)
+    end
+end
+
+UpdateMenuSize()
+
+if workspace.CurrentCamera then
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateMenuSize)
+end
+
+-- Select initial tab
 SelectTab("Main")
 
 -- Drag the main window
@@ -396,10 +397,8 @@ end)
 
 UserInputService.InputChanged:Connect(function(Input)
     if WindowDragging
-        and (
-            Input == WindowDragInput
-            or Input.UserInputType == Enum.UserInputType.Touch
-        ) then
+        and (Input == WindowDragInput
+        or Input.UserInputType == Enum.UserInputType.Touch) then
 
         local Delta = Input.Position - WindowDragStart
 
@@ -449,7 +448,7 @@ ToggleStroke.Color = LineColor
 ToggleStroke.Thickness = 1
 ToggleStroke.Parent = ToggleButton
 
--- Drag Toggle only while menu is closed
+-- Toggle button can move only while menu is OPEN
 local ToggleDragging = false
 local ToggleDragStart
 local ToggleStartPosition
@@ -457,7 +456,7 @@ local ToggleDragInput
 local ToggleMoved = false
 
 ToggleButton.InputBegan:Connect(function(Input)
-    if Window.Visible then
+    if not Window.Visible then
         return
     end
 
@@ -485,7 +484,7 @@ ToggleButton.InputChanged:Connect(function(Input)
 end)
 
 UserInputService.InputChanged:Connect(function(Input)
-    if not ToggleDragging or Window.Visible then
+    if not ToggleDragging or not Window.Visible then
         return
     end
 
